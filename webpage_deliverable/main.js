@@ -8,15 +8,6 @@ window.addEventListener('scroll', () => {
 });
 toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-// Theme toggle (simple class switch on <html>)
-const themeToggle = document.getElementById('themeToggle');
-let dark = false;
-themeToggle.addEventListener('click', () => {
-  dark = !dark;
-  document.documentElement.classList.toggle('dark', dark);
-  themeToggle.textContent = dark ? 'Light' : 'Dark';
-});
-
 // Controls and state
 const originSelect = document.getElementById('originSelect');
 const zoomSlider = document.getElementById('zoomSlider');

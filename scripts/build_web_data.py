@@ -1,9 +1,10 @@
 """
-Build small, frontend-ready data extracts from the cleaned T-100 files.
+Data extracts from the cleaned T-100 files for the map visualization
 
-- Top 200 routes per (year, month) with coordinates for map arcs.
-- Top carriers per origin for those map routes (per year & month).
-- Monthly totals (with domestic/international split) for trend/heatmap charts.
+- Top 200 routes per (year, month) with coordinates for map routes
+- Top carriers per origin for those map routes (per year & month)
+- Monthly totals (with domestic/international split) for trend/heatmap charts
+
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ OUT_DIR = ROOT / "webpage_deliverable" / "data"
 
 
 def load_airports() -> pd.DataFrame:
+    # Airport lookup (lat/lon, city, country) keyed by IATA
     airports = pd.read_csv(AIRPORTS_PATH)
     airports["iata"] = airports["iata"].str.upper()
     cols = ["iata", "name", "city", "state", "country", "latitude", "longitude"]
@@ -28,6 +30,7 @@ def load_airports() -> pd.DataFrame:
 
 
 def load_flights() -> pd.DataFrame:
+    # Pull only the columns we need for the web extracts
     usecols = [
         "YEAR",
         "MONTH",
@@ -48,7 +51,7 @@ def load_flights() -> pd.DataFrame:
 
 
 def attach_airport_meta(df: pd.DataFrame, airports: pd.DataFrame) -> pd.DataFrame:
-    """Add origin/destination metadata columns."""
+    # Add origin/destination metadata columns
     origin_meta = airports.add_prefix("o_")
     dest_meta = airports.add_prefix("d_")
     df = df.merge(origin_meta, left_on="ORIGIN", right_index=True, how="left")
@@ -92,6 +95,7 @@ def build_route_links(flights: pd.DataFrame, airports: pd.DataFrame) -> pd.DataF
 
 
 def build_carrier_rankings(flights: pd.DataFrame, origins: pd.Series) -> pd.DataFrame:
+    # Per origin/year/month carrier leaderboard (trimmed to top 15 to fit in stat box)
     carriers = flights[flights["ORIGIN"].isin(origins)]
     carriers = (
         carriers.groupby(
@@ -104,14 +108,17 @@ def build_carrier_rankings(flights: pd.DataFrame, origins: pd.Series) -> pd.Data
         )
         .sort_values("PASSENGERS", ascending=False)
     )
-    carriers["rank"] = carriers.groupby(["YEAR", "MONTH", "ORIGIN"])[
-        "PASSENGERS"
-    ].rank(method="first", ascending=False)
+    carriers["rank"] = carriers.groupby(["YEAR", "MONTH", "ORIGIN"])["PASSENGERS"].rank(
+        method="first", ascending=False
+    )
     carriers = carriers[carriers["rank"] <= 12].drop(columns="rank")
     return carriers
 
 
-def build_monthly_metrics(flights: pd.DataFrame, country_lookup: Dict[str, str]) -> pd.DataFrame:
+def build_monthly_metrics(
+    flights: pd.DataFrame, country_lookup: Dict[str, str]
+) -> pd.DataFrame:
+    # Monthly totals split by domestic/international (used to exist for other charts)
     f = flights.copy()
     f["o_country"] = f["ORIGIN"].map(country_lookup)
     f["d_country"] = f["DEST"].map(country_lookup)
@@ -127,9 +134,7 @@ def build_monthly_metrics(flights: pd.DataFrame, country_lookup: Dict[str, str])
         )
         .sort_values(["YEAR", "MONTH"])
     )
-    monthly["load_factor"] = monthly["PASSENGERS"] / monthly["SEATS"].replace(
-        0, pd.NA
-    )
+    monthly["load_factor"] = monthly["PASSENGERS"] / monthly["SEATS"].replace(0, pd.NA)
     monthly["date"] = pd.to_datetime(
         dict(year=monthly["YEAR"], month=monthly["MONTH"], day=1)
     )
@@ -137,6 +142,7 @@ def build_monthly_metrics(flights: pd.DataFrame, country_lookup: Dict[str, str])
 
 
 def main():
+    # Wire it all together and write JSON for the frontend
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     airports = load_airports()
     flights = load_flights()
@@ -149,7 +155,9 @@ def main():
 
     routes.to_json(OUT_DIR / "flow_links.json", orient="records")
     carrier_rankings.to_json(OUT_DIR / "carriers_by_origin.json", orient="records")
-    monthly.to_json(OUT_DIR / "monthly_metrics.json", orient="records", date_format="iso")
+    monthly.to_json(
+        OUT_DIR / "monthly_metrics.json", orient="records", date_format="iso"
+    )
 
     print(f"Wrote {len(routes):,} route links -> {OUT_DIR/'flow_links.json'}")
     print(
