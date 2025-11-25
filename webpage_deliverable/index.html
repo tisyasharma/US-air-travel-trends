@@ -13,11 +13,9 @@
   <!-- AOS Animate on Scroll -->
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet" />
 
-  <!-- D3 & Vega (for Altair embeds later) -->
+  <!-- D3 -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
 </head>
 
 <body>
@@ -27,52 +25,22 @@
       <a href="#top" class="brand">Flight Trends</a>
       <div class="nav__links">
         <a href="#overview">Overview</a>
-        <a href="#trends">Trends</a>
-        <a href="#compare">Domestic vs Intl</a>
-        <a href="#efficiency">Efficiency</a>
-        <a href="#seasonality">Seasonality</a>
+        <a href="#routes">Routes Map</a>
         <a href="#methods">Methods</a>
       </div>
-      <button id="themeToggle" class="btn btn--ghost">Dark</button>
+    <button id="themeToggle" class="btn btn--ghost">Dark</button>
     </div>
   </nav>
 
-  <!-- Title area with headings and description of the project, what we hope to analyze and investigate, will update with analysis and other details after we finish visualizations -->
+  <!-- Title area -->
   <header id="top" class="hero">
-    <div class="container grid">
-      <div class="col" data-aos="fade-up">
-        <p class="kicker">DS4200 Final Project - Tisya Sharma, Tim Matten, John Dunay</p>
-        <h1>Major Flight Trends Over the Past 25 Years</h1>
-        <p class="lede">
-          How economic shocks and global events shaped U.S. air travel from 1999–2024.
-          This page will host Altair & D3 visualizations to reveal long‑term changes,
-          seasonal patterns, and passenger load.
-        </p>
-
-        <div class="legend">
-          <span class="dot" style="--c:var(--accent1)"></span> [Fill later]
-          <span class="dot" style="--c:var(--accent2)"></span> [Fill later]
-        </div>
-      </div>
-
-      <div class="col card" data-aos="fade-up" data-aos-delay="100">
-        <h2 class="card__title">Quick Filters</h2>
-        <div class="filters">
-          <label>Year Range
-            <input id="yearRange" type="range" min="1999" max="2024" value="2024">
-            <div class="range-meta"><span>1999</span><span id="yearVal">2024</span></div>
-          </label>
-
-          <label>Location
-            <select id="sectorSelect">
-              <option value="all" selected>All</option>
-              <option value="domestic">Domestic</option>
-              <option value="international">International</option>
-            </select>
-          </label>
-        </div>
-        <p class="help">Filters will sync across all charts.</p>
-      </div>
+    <div class="container">
+      <p class="kicker" data-aos="fade-up">DS4200 Final Project - Tisya Sharma, Tim Matten, John Dunay</p>
+      <h1 data-aos="fade-up">Major Flight Trends Over the Past 25 Years</h1>
+      <p class="lede" data-aos="fade-up">
+        How economic shocks and global events shaped U.S. air travel from 1999–2024.
+        This page hosts an interactive routes map to explore top destinations by origin, year, and month.
+      </p>
     </div>
   </header>
 
@@ -89,74 +57,87 @@
     </div>
   </section>
 
+  <!-- ROUTES MAP -->
+  <section id="routes" class="section section--alt">
+    <div class="container">
+      <div class="section__head" data-aos="fade-up">
+        <div>
+          <p class="kicker">Routes</p>
+          <h3>Passenger Flows by Origin</h3>
+          <p class="muted">Interactive U.S. route map showing the top destinations for a chosen origin, year, and month. Route lines are sized by volume; the top 3 routes are highlighted.</p>
+          <div class="map-legend">
+            <span class="legend-item"><span class="dot" style="--c:var(--accent1)"></span>Top 3 routes</span>
+            <span class="legend-item"><span class="dot" style="--c:var(--route)"></span>Other top routes</span>
+          </div>
+        </div>
+        <div class="map-controls">
+          <button class="btn btn--ghost" onclick="downloadPNG('flowMap')">Save PNG</button>
+        </div>
+      </div>
+
+      <div id="flowMap" class="viz-card viz-card--tall" data-aos="fade-up">
+        <div class="map-layout">
+          <div class="map-filters">
+            <h4>Filters</h4>
+            <label>Origin Airport
+              <select id="originSelect" class="select"></select>
+            </label>
+            <label>Year
+              <select id="mapYearSelect" class="select"></select>
+            </label>
+            <label>Month
+              <select id="mapMonthSelect" class="select">
+                <option value="0" selected>All months</option>
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+            </label>
+            <label>Sort by
+              <select id="mapSort" class="select">
+                <option value="PASSENGERS" selected>Passengers</option>
+                <option value="DEPARTURES">Flights</option>
+              </select>
+            </label>
+            <label>Top destinations
+              <input type="range" id="mapTopSlider" min="1" max="25" step="1" value="15">
+              <div class="range-meta"><span>1</span><span id="mapTopVal">15</span></div>
+            </label>
+            <div class="map-zoom">
+              <button id="zoomReset" class="btn btn--ghost">Reset</button>
+              <input type="range" id="zoomSlider" min="1" max="5" value="1" step="0.1">
+              <span id="zoomVal">1.0x</span>
+            </div>
+          </div>
+          <div class="map-canvas" id="flowMapCanvas">
+          </div>
+        </div>
+      </div>
+      <div class="map-panels" data-aos="fade-up">
+        <div class="card" id="mapSummary">
+          <h4>Selection</h4>
+          <p class="muted">Totals will appear here after data loads.</p>
+        </div>
+        <div class="card" id="carrierList">
+          <h4>Carriers Serving Origin</h4>
+          <p class="muted">Top carriers by passengers for this origin.</p>
+        </div>
+      </div>
+      <p class="caption">Figure 1. Top destinations for the selected month (summed if “All months”).</p>
+    </div>
+  </section>
+
   <!-- TRENDS -->
-  <section id="trends" class="section section--alt">
-    <div class="container">
-      <div class="section__head" data-aos="fade-up">
-        <div>
-          <p class="kicker">Trends</p>
-          <h3>Passenger Trends Over Time</h3>
-          <p class="muted">[FILL WITH DESCRIPTION LATER]</p>
-        </div>
-        <button class="btn btn--ghost" onclick="downloadPNG('trendChart')">Save PNG</button>
-      </div>
-
-      <div id="trendChart" class="viz-card" style="display:none" data-aos="fade-up"></div>
-      <p class="caption">Figure 1. [FILL WITH CONCLUSIONS LATER]</p>
-    </div>
-  </section>
-
-  <!-- COMPARE -->
-  <section id="compare" class="section">
-    <div class="container">
-      <div class="section__head" data-aos="fade-up">
-        <div>
-          <p class="kicker">Comparison</p>
-          <h3>Domestic vs International Passengers</h3>
-          <p class="muted">[FILL WITH DESCRIPTION LATER]</p>
-        </div>
-        <button class="btn btn--ghost" onclick="downloadPNG('compareChart')">Save PNG</button>
-      </div>
-
-      <div id="compareChart" class="viz-card" style="display:none" data-aos="fade-up"></div>
-      <p class="caption">Figure 2. [FILL WITH CONCLUSIONS LATER]</p>
-    </div>
-  </section>
-
-  <!-- Efficiency Section -->
-  <section id="efficiency" class="section section--alt">
-    <div class="container">
-      <div class="section__head" data-aos="fade-up">
-        <div>
-          <p class="kicker">Efficiency</p>
-          <h3>Passenger‑to‑Flight Efficiency</h3>
-          <p class="muted">[FILL WITH DESCRIPTION LATER].</p>
-        </div>
-        <button class="btn btn--ghost" onclick="downloadPNG('efficiencyChart')">Save PNG</button>
-      </div>
-
-      <div id="efficiencyChart" class="viz-card" style="display:none" data-aos="fade-up"></div>
-      <p class="caption">Figure 3. [FILL WITH CONCLUSIONS LATER]</p>
-    </div>
-  </section>
-
-  <!-- Seasonality Section-->
-  <section id="seasonality" class="section">
-    <div class="container">
-      <div class="section__head" data-aos="fade-up">
-        <div>
-          <p class="kicker">Seasonality</p>
-          <h3>Seasonal Heatmap</h3>
-          <p class="muted">[FILL WITH DESCRIPTION LATER]</p>
-        </div>
-        <button class="btn btn--ghost" onclick="downloadPNG('heatmap')">Save PNG</button>
-      </div>
-
-      <div id="heatmap" class="viz-card" style="display:none" data-aos="fade-up"></div>
-      <p class="caption">Figure 4. [FILL WITH CONCLUSIONS LATER].</p>
-    </div>
-  </section>
-
+  <!-- (other visualizations removed) -->
   <!-- Methods -->
   <section id="methods" class="section section--alt">
     <div class="container grid-two" data-aos="fade-up">
@@ -171,7 +152,7 @@
         <h4>Sources & Credits</h4>
         <ul class="list">
           <li>U.S. Bureau of Transportation Statistics (BTS) T-100</li>
-          <li>Visualization: Altair (Vega‑Lite) & D3.</li>
+          <li>Visualization: D3.js.</li>
           <li>Design: Custom CSS.</li>
         </ul>
       </div>
