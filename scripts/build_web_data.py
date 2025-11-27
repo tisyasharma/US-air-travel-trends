@@ -141,6 +141,42 @@ def build_monthly_metrics(
     return monthly
 
 
+def build_carrier_market_share(
+    flights: pd.DataFrame, airports: pd.DataFrame
+) -> pd.DataFrame:
+    # Domestic market share per carrier (top 10 per month + "Other"), normalized to 100%
+    country_lookup = airports["country"].to_dict()
+    f = flights.copy()
+    f["o_country"] = f["ORIGIN"].map(country_lookup)
+    f["d_country"] = f["DEST"].map(country_lookup)
+    f = f[(f["o_country"] == "USA") & (f["d_country"] == "USA")].copy()
+
+    grouped = (
+        f.groupby(["YEAR", "MONTH", "UNIQUE_CARRIER_NAME"], as_index=False)
+        .agg(PASSENGERS=("PASSENGERS", "sum"))
+        .sort_values("PASSENGERS", ascending=False)
+    )
+
+    frames: List[pd.DataFrame] = []
+    for (year, month), frame in grouped.groupby(["YEAR", "MONTH"]):
+        frame = frame.sort_values("PASSENGERS", ascending=False)
+        top = frame.head(10)
+        other = frame.iloc[10:]
+        if not other.empty:
+            other_row = {
+                "YEAR": year,
+                "MONTH": month,
+                "UNIQUE_CARRIER_NAME": "Other",
+                "PASSENGERS": other["PASSENGERS"].sum(),
+            }
+            top = pd.concat([top, pd.DataFrame([other_row])], ignore_index=True)
+        total = top["PASSENGERS"].sum()
+        top["market_share"] = top["PASSENGERS"] / total if total else 0
+        frames.append(top)
+
+    return pd.concat(frames, ignore_index=True)
+
+
 def main():
     # Wire it all together and write JSON for the frontend
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -152,11 +188,15 @@ def main():
     routes = build_route_links(flights, airports)
     carrier_rankings = build_carrier_rankings(flights, routes["ORIGIN"].unique())
     monthly = build_monthly_metrics(flights, country_lookup)
+    market_share = build_carrier_market_share(flights, airports)
 
     routes.to_json(OUT_DIR / "flow_links.json", orient="records")
     carrier_rankings.to_json(OUT_DIR / "carriers_by_origin.json", orient="records")
     monthly.to_json(
         OUT_DIR / "monthly_metrics.json", orient="records", date_format="iso"
+    )
+    market_share.to_json(
+        OUT_DIR / "carrier_market_share.json", orient="records", date_format="iso"
     )
 
     print(f"Wrote {len(routes):,} route links -> {OUT_DIR/'flow_links.json'}")
@@ -164,6 +204,7 @@ def main():
         f"Carriers: {len(carrier_rankings):,} rows -> {OUT_DIR/'carriers_by_origin.json'}"
     )
     print(f"Monthly metrics: {len(monthly):,} rows -> {OUT_DIR/'monthly_metrics.json'}")
+    print(f"Market share: {len(market_share):,} rows -> {OUT_DIR/'carrier_market_share.json'}")
 
 
 if __name__ == "__main__":

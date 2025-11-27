@@ -34,6 +34,7 @@ const monthNames = [
   'November',
   'December',
 ];
+// Used to label states on hover for the basemap
 const stateAbbrev = {
   Alabama: 'AL',
   Alaska: 'AK',
@@ -89,10 +90,12 @@ const stateAbbrev = {
   'Puerto Rico': 'PR',
 };
 
+// Central UI state for the map filters
 const state = { year: 2025, month: 0, origin: null };
 
 let flowLinks = [];
 let carriers = [];
+let marketShare = [];
 let worldGeo = null;
 let usaFeature = null;
 let statesMesh = null;
@@ -102,6 +105,7 @@ let svgForZoom = null;
 let originsByPeriod = new Map();
 const mapFilters = { sortBy: 'PASSENGERS', top: 15 };
 
+// Resolve CSS custom properties so colors stay in sync with styles.css
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 const MAP_COLORS = {
@@ -113,6 +117,22 @@ const MAP_COLORS = {
   route: cssVar('--route') || '#4B6EDC',
   highlight: cssVar('--accent1') || '#F97316',
 };
+const MARKET_COLORS = [
+  cssVar('--accent2') || '#5471a9',
+  cssVar('--accent1') || '#e71419',
+  cssVar('--accent3') || '#f97316',
+  cssVar('--accent4') || '#2563eb',
+  cssVar('--accent5') || '#1ea970',
+  '#8b5cf6',
+  '#14b8a6',
+  '#f59e0b',
+  '#0ea5e9',
+  '#9ca3af',
+];
+const carrierAliases = {
+  'ExpressJet Airlines LLC d/b/a aha!': 'ExpressJet (aha!)',
+};
+const displayCarrier = (name) => carrierAliases[name] || name;
 
 const tooltip = d3
   .select('body')
@@ -136,11 +156,21 @@ function monthLabel(m) {
   return monthNames[m] || 'Month ' + m;
 }
 
-// Load data (cleaned extracts)
+// Simple debounce for resize handlers
+function debounce(fn, wait = 150) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+}
+
+// Load the prepared JSON extracts and coerce fields to numbers
 async function loadData() {
-  const [linksRaw, carrierDataRaw] = await Promise.all([
+  const [linksRaw, carrierDataRaw, marketShareRaw] = await Promise.all([
     fetch('data/flow_links.json').then((r) => r.json()),
     fetch('data/carriers_by_origin.json').then((r) => r.json()),
+    fetch('data/carrier_market_share.json').then((r) => r.json()),
   ]);
 
   // Omit incomplete 2025 data
@@ -169,6 +199,16 @@ async function loadData() {
     DEPARTURES: +d.DEPARTURES,
     SEATS: +d.SEATS,
   }));
+  marketShare = marketShareRaw
+    .map((d) => ({
+      ...d,
+      YEAR: +d.YEAR,
+      MONTH: +d.MONTH,
+      PASSENGERS: +d.PASSENGERS,
+      market_share: d.market_share ? +d.market_share : 0,
+      date: new Date(+d.YEAR, +d.MONTH - 1, 1),
+    }))
+    .filter((d) => d.YEAR <= 2024);
 
   const minYear = d3.min(flowLinks, (d) => d.YEAR) || 1999;
   const maxYear = d3.max(flowLinks, (d) => d.YEAR) || 2024;
@@ -192,6 +232,7 @@ async function loadData() {
   }
 }
 
+// Build a lookup of origins per (year, month) for populating the dropdown
 function buildOriginIndex() {
   originsByPeriod.clear();
   flowLinks.forEach((d) => {
@@ -204,6 +245,7 @@ function buildOriginIndex() {
   });
 }
 
+// Populate the origin dropdown with the busiest origins for the selected period
 function populateOriginSelect({ year, month }) {
   const key = `${year}-${month}`;
   const map = originsByPeriod.get(key);
@@ -259,6 +301,7 @@ if (mapTopSlider && mapTopVal) {
   });
 }
 
+// Keep map + carrier panel in sync when filters change
 function syncFilters() {
   const { year, month, origin } = state;
   if (origin) {
@@ -267,6 +310,7 @@ function syncFilters() {
   }
 }
 
+// Bidirectional zoom controls (slider <-> D3 zoom)
 if (zoomSlider) {
   zoomSlider.addEventListener('input', () => {
     const k = +zoomSlider.value;
@@ -287,6 +331,7 @@ if (zoomReset) {
 }
 
 // ---- Routes map ----
+// Generate intermediate coordinates for a smooth great-circle arc
 function greatCircleCoords(d) {
   const from = [d.o_longitude, d.o_latitude];
   const to = [d.d_longitude, d.d_latitude];
@@ -294,6 +339,7 @@ function greatCircleCoords(d) {
   return d3.range(0, 1.01, 0.02).map((t) => interp(t));
 }
 
+// Sum across months when "All months" is selected
 function aggregateAcrossMonths(links) {
   const grouped = d3.rollups(
     links,
@@ -316,6 +362,7 @@ function aggregateAcrossMonths(links) {
   return grouped.map(([, val]) => val);
 }
 
+// Main render pipeline for the flow map
 async function updateFlowMap({ year, month, origin }) {
   const el = d3.select('#flowMapCanvas');
   el.selectAll('svg').remove();
@@ -375,6 +422,7 @@ async function updateFlowMap({ year, month, origin }) {
       countries.features.find((f) => (f.properties.name || '').includes('United States')) ||
       null;
   }
+  // Fallback to a world outline if we can't isolate the USA feature
   const land = usaFeature
     ? { type: 'FeatureCollection', features: [usaFeature] }
     : { type: 'FeatureCollection', features: countries.features };
@@ -542,6 +590,7 @@ async function updateFlowMap({ year, month, origin }) {
   renderMapSummary(links, { year, month, origin });
 }
 
+// Tooltip handlers for route/destination hover
 function showTooltip(event, d) {
   const originLabel = d.o_city ? `${d.o_city} (${d.ORIGIN})` : d.ORIGIN;
   const destLabel = d.d_city ? `${d.d_city} (${d.DEST})` : d.DEST;
@@ -567,6 +616,7 @@ function hideTooltip() {
   tooltip.style('opacity', 0).style('display', 'none');
 }
 
+// Update the summary card beneath the map
 function renderMapSummary(links, { year, month, origin }) {
   const summaryEl = document.getElementById('mapSummary');
   if (!links.length) {
@@ -592,6 +642,7 @@ function renderMapSummary(links, { year, month, origin }) {
   `;
 }
 
+// Render the carrier leaderboard for the selected origin
 function renderCarrierList({ year, month, origin }) {
   const container = document.getElementById('carrierList');
   let data = carriers.filter((d) => d.YEAR === year && d.ORIGIN === origin);
@@ -640,6 +691,235 @@ function renderCarrierList({ year, month, origin }) {
       .join('');
 }
 
+// Airline market-share (100% stacked area)
+function renderMarketShare() {
+  const container = d3.select('#marketShareChart');
+  const legendEl = document.getElementById('marketLegend');
+  const node = container.node();
+  container.selectAll('svg').remove();
+  if (!node) return;
+
+  if (!marketShare.length) {
+    if (legendEl) legendEl.innerHTML = '';
+    container.append('div').attr('class', 'muted').style('padding', '12px').text('Market share data unavailable.');
+    return;
+  }
+
+  try {
+    if (legendEl) legendEl.innerHTML = '';
+
+    // Order carriers by latest month (keeps mergers sensible), push Other to the end
+    const latestDate = d3.max(marketShare, (d) => d.date);
+    const latestSlice = marketShare.filter((d) => +d.date === +latestDate);
+    const ranked = latestSlice
+      .sort((a, b) => b.market_share - a.market_share)
+      .map((d) => d.UNIQUE_CARRIER_NAME);
+    const allCarriers = Array.from(new Set(marketShare.map((d) => d.UNIQUE_CARRIER_NAME))).filter(Boolean);
+    const order = [...new Set([...ranked, ...allCarriers.filter((c) => c !== 'Other')])];
+    if (allCarriers.includes('Other')) order.push('Other');
+    if (!order.length) {
+      container.append('div').attr('class', 'muted').style('padding', '12px').text('Market share data unavailable.');
+      return;
+    }
+
+    // Unique, calmer colors per carrier (softened palette)
+    const basePalette = [
+      '#4c6edb',
+      '#5aa0a8',
+      '#4fa772',
+      '#b7c36a',
+      '#f0b35a',
+      '#e57a61',
+      '#c35c9b',
+      '#8a6cc8',
+      '#6da2e0',
+      '#7dc8d3',
+      '#9bcf7c',
+      '#f4c06a',
+      '#f59f73',
+      '#d68bbd',
+      '#9a89d9',
+      '#6f85b3',
+      '#5d9fae',
+      '#7ab283',
+      '#d0d78c',
+      '#f2c17f',
+    ];
+    const palette = order.map((_, i) => basePalette[i % basePalette.length]);
+    const color = d3.scaleOrdinal().domain(order).range(palette);
+
+    // Group by month, keep pre-computed percentages
+    const byDate = d3.rollups(
+      marketShare,
+      (v) => {
+        const entry = { date: v[0].date };
+        order.forEach((c) => (entry[c] = 0));
+        v.forEach((d) => {
+          entry[d.UNIQUE_CARRIER_NAME] = d.market_share || 0;
+        });
+        return entry;
+      },
+      (d) => d.date.getTime()
+    );
+    const seriesInput = byDate
+      .map(([, val]) => val)
+      .filter((row) => order.some((c) => row[c] > 0))
+      .sort((a, b) => a.date - b.date);
+    if (!seriesInput.length) {
+      container.append('div').attr('class', 'muted').style('padding', '12px').text('Market share data unavailable.');
+      return;
+    }
+
+    const width = node.clientWidth || 960;
+    const height = node.clientHeight || 360;
+    const margin = { top: 10, right: 16, bottom: 30, left: 48 };
+    const xDomainNums = d3.extent(seriesInput, (d) => +d.date);
+    if (!xDomainNums[0] || !xDomainNums[1]) {
+      console.error('Market share: invalid x-domain', xDomainNums);
+      container.append('div').attr('class', 'muted').style('padding', '12px').text('Market share domain missing.');
+      return;
+    }
+    const x = d3
+      .scaleUtc()
+      .domain([new Date(xDomainNums[0]), new Date(xDomainNums[1])])
+      .range([margin.left, width - margin.right]);
+    const y = d3.scaleLinear().domain([0, 1]).range([height - margin.bottom, margin.top]);
+
+    const stack = d3
+      .stack()
+      .keys(order)
+      .value((d, key) => d[key] || 0)
+      .offset(d3.stackOffsetExpand);
+    const stacked = stack(seriesInput);
+
+    console.log('market-share debug', {
+      rows: marketShare.length,
+      carriers: order.length,
+      series: seriesInput.length,
+      width,
+      height,
+      xDomain: xDomainNums,
+      first: seriesInput[0],
+      last: seriesInput[seriesInput.length - 1],
+    });
+
+    const svg = container.append('svg').attr('width', width).attr('height', height);
+    // If something still fails to draw, leave a marker div for quick debugging
+    container
+      .append('div')
+      .attr('class', 'muted')
+      .style('position', 'absolute')
+      .style('right', '12px')
+      .style('bottom', '8px')
+      .style('font-size', '11px')
+      .text(`Series: ${seriesInput.length} · Carriers: ${order.length}`);
+    const area = d3
+      .area()
+      .x((d) => x(d.data.date))
+      .y0((d) => y(d[0]))
+      .y1((d) => y(d[1]))
+      .curve(d3.curveMonotoneX);
+
+    svg
+      .append('g')
+      .selectAll('path')
+      .data(stacked)
+      .join('path')
+      .attr('fill', (d) => color(d.key))
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 0.6)
+      .attr('opacity', 0.95)
+      .attr('d', area);
+
+    svg
+      .append('g')
+      .attr('transform', `translate(0,${height - margin.bottom})`)
+      .call(d3.axisBottom(x).ticks(width < 640 ? 6 : 10).tickFormat(d3.utcFormat('%Y')))
+      .selectAll('text')
+      .style('font-size', '12px');
+
+    svg
+      .append('g')
+      .attr('transform', `translate(${margin.left},0)`)
+      .call(d3.axisLeft(y).ticks(5).tickFormat(d3.format('.0%')))
+      .call((g) => g.select('.domain').remove())
+      .selectAll('text')
+      .style('font-size', '12px');
+
+    const pointer = svg
+      .append('line')
+      .attr('stroke', '#111827')
+      .attr('stroke-opacity', 0.2)
+      .attr('y1', margin.top)
+      .attr('y2', height - margin.bottom)
+      .style('display', 'none');
+
+    const bisect = d3.bisector((d) => d.date).center;
+    const formatMonth = d3.timeFormat('%b %Y');
+    svg
+      .append('rect')
+      .attr('fill', 'transparent')
+      .attr('pointer-events', 'all')
+      .attr('x', margin.left)
+      .attr('y', margin.top)
+      .attr('width', width - margin.left - margin.right)
+      .attr('height', height - margin.top - margin.bottom)
+      .on('mousemove', (event) => {
+        const [mx, my] = d3.pointer(event);
+        const i = bisect(seriesInput, x.invert(mx));
+        const idx = Math.max(0, Math.min(seriesInput.length - 1, i));
+        const row = seriesInput[idx];
+        pointer.style('display', null).attr('x1', mx).attr('x2', mx);
+
+        // Identify which carrier band the pointer is over
+        const shareAt = y.invert(my);
+        let carrierUnder = null;
+        let shareExact = null;
+        for (const series of stacked) {
+          const seg = series[idx];
+          if (shareAt >= seg[0] && shareAt <= seg[1]) {
+            carrierUnder = series.key;
+            shareExact = row[series.key] ?? seg[1] - seg[0];
+            break;
+          }
+        }
+
+        const rows = order
+          .map((c) => ({ carrier: c, share: row[c] || 0 }))
+          .sort((a, b) => b.share - a.share)
+          .slice(0, 8)
+          .map((d) => `<div>${displayCarrier(d.carrier)}: ${formatPct(d.share)}</div>`)
+          .join('');
+        const focusColor = carrierUnder ? color(carrierUnder) : null;
+        const focusLine = carrierUnder
+          ? `<span style="color:${focusColor}">${displayCarrier(carrierUnder)}</span> — ${formatPct(shareExact)}`
+          : 'Market share';
+        const html = `<div><strong>${formatMonth(row.date)}</strong><div class="muted">${focusLine}</div></div>${rows}`;
+        const [px, py] = d3.pointer(event, document.body);
+        tooltip
+          .html(html)
+          .style('opacity', 1)
+          .style('display', 'block')
+          .style('left', `${px + 14}px`)
+          .style('top', `${py + 14}px`);
+      })
+      .on('mouseleave', () => {
+        pointer.style('display', 'none');
+        hideTooltip();
+      });
+
+    // Legend after successful render
+    if (legendEl) {
+      legendEl.innerHTML = order
+        .map((c) => `<span class="legend-chip"><span style="background:${color(c)}"></span>${displayCarrier(c)}</span>`)
+        .join('');
+    }
+  } catch (err) {
+    console.error('Market share render failed', err);
+    container.append('div').attr('class', 'muted').style('padding', '12px').text('Market share chart failed to render.');
+  }
+}
+
 // Export PNG for Vega/Altair canvases and SVG map
 async function downloadPNG(containerId) {
   const canvas = document.querySelector(`#${containerId} canvas`);
@@ -675,4 +955,12 @@ async function downloadPNG(containerId) {
 (async function init() {
   await loadData();
   syncFilters();
+  renderMarketShare();
 })();
+
+window.addEventListener(
+  'resize',
+  debounce(() => {
+    renderMarketShare();
+  }, 150)
+);

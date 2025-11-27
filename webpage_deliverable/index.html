@@ -30,12 +30,13 @@
     <div class="nav__inner">
       <a href="#top" class="brand">Flight Trends</a>
       <div class="nav__links">
-        <a href="#overview">Overview</a>
-        <a href="#routes">Routes Map</a>
-        <a href="#methods">Methods</a>
-      </div>
+      <a href="#overview">Overview</a>
+      <a href="#routes">Routes Map</a>
+      <a href="#market">Market Share</a>
+      <a href="#methods">Methods</a>
     </div>
-  </nav>
+  </div>
+</nav>
 
   <!-- Title area -->
   <header id="top" class="hero">
@@ -140,8 +141,30 @@
     </div>
   </section>
 
-  <!-- TRENDS -->
-  <!-- (other visualizations removed) -->
+  <!-- MARKET SHARE -->
+  <section id="market" class="section">
+    <div class="container">
+      <div class="section__head" data-aos="fade-up">
+        <div>
+          <p class="kicker">Market Share</p>
+          <h3>Airline Market Share (100% Stacked)</h3>
+          <p class="muted">Relative domestic passenger share by carrier, normalized to 100% each month so you can spot winners/losers regardless of total volume.</p>
+        </div>
+        <div class="map-controls">
+          <button class="btn btn--ghost" onclick="downloadPNG('marketShareChart')">Save PNG</button>
+        </div>
+      </div>
+
+      <div class="viz-card viz-card--market" data-aos="fade-up">
+        <div class="market-share-inner">
+          <div id="marketLegend" class="stacked-legend"></div>
+          <div id="marketShareChart" class="chart-area"></div>
+        </div>
+      </div>
+      <p class="caption">Figure 2. Each band shows that carrier’s percentage of the domestic market; “Other” aggregates smaller airlines.</p>
+    </div>
+  </section>
+
   <!-- Methods -->
   <section id="methods" class="section section--alt">
     <div class="container grid-two" data-aos="fade-up">
