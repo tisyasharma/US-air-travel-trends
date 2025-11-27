@@ -920,6 +920,129 @@ function renderMarketShare() {
   }
 }
 
+async function renderSeasonalHeatmap() {
+  const heatEl = d3.select("#seasonHeatmap");
+  heatEl.selectAll("*").remove();
+
+  const width = heatEl.node().clientWidth;
+  const height = heatEl.node().clientHeight;
+
+  // Load your monthly totals (precomputed JSON — see preprocessing below)
+  const monthly = await fetch("data/monthly_metrics.json").then(r => r.json());
+
+  // Extract months 1–12 & all years
+  const years = [...new Set(monthly.map(d => d.YEAR))].sort((a,b) => a-b);
+  const months = d3.range(1,13);
+
+  // Aggregate by YEAR + MONTH across Domestic, International, Unknown
+  const aggregated = d3.rollups(
+    monthly,
+    v => d3.sum(v, d => d.PASSENGERS),
+    d => d.YEAR,
+    d => d.MONTH
+  );
+
+  // Convert into lookup[year][month] = total passengers
+  const lookup = {};
+  aggregated.forEach(([year, monthEntries]) => {
+    lookup[year] = {};
+    monthEntries.forEach(([month, total]) => {
+      lookup[year][month] = total;
+    });
+  });
+
+    // Determine meaningful scale (ignore tiny values)
+  const meaningfulValues = aggregated.flatMap(([year, entries]) =>
+    entries.map(([month, total]) => total).filter(v => v > 30_000_000)
+  );
+
+  const minPax = d3.min(meaningfulValues);
+  const maxPax = d3.max(meaningfulValues);
+
+  // Color scale for real months
+  const color = d3.scaleSequential()
+    .domain([minPax, maxPax])
+    .interpolator(d3.interpolateBlues);
+
+  // Threshold for tiny values
+  const tinyThreshold = 30_000_000;
+
+  const svg = heatEl.append("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+  const margin = { top: 40, right: 20, bottom: 30, left: 55 };
+  const cellW = (width - margin.left - margin.right) / 12;
+  const cellH = (height - margin.top - margin.bottom) / years.length;
+
+  const g = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Axes
+  const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  // X labels
+  g.selectAll(".x-label")
+    .data(months)
+    .enter()
+    .append("text")
+    .attr("x", d => (d-1)*cellW + cellW/2)
+    .attr("y", -6)
+    .attr("text-anchor", "middle")
+    .attr("font-size", 12)
+    .text(d => monthNames[d-1]);
+
+  // Y labels
+  g.selectAll(".y-label")
+    .data(years)
+    .enter()
+    .append("text")
+    .attr("x", -8)
+    .attr("y", (year, i) => i*cellH + cellH/2)
+    .attr("text-anchor", "end")
+    .attr("alignment-baseline", "middle")
+    .attr("font-size", 12)
+    .text(year => year);
+
+  // Tooltip
+  const tooltip = d3.select("body")
+    .append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+  // Draw cells
+  years.forEach((yr, yi) => {
+    months.forEach((m, mi) => {
+      const value = lookup[yr]?.[m] || 0;
+
+      g.append("rect")
+        .attr("x", (m-1)*cellW)
+        .attr("y", yi*cellH)
+        .attr("width", cellW - 1)
+        .attr("height", cellH - 1)
+        .attr("fill", value < tinyThreshold ? "#e0e0e0" : color(value))
+        .on("mouseenter", (event) => {
+          tooltip.style("opacity", 1)
+            .html(`<strong>${monthNames[m-1]} ${yr}</strong><br>${formatNumber(value)} passengers`);
+        })
+        .on("mousemove", (event) => {
+          tooltip
+            .style("left", event.pageX + 10 + "px")
+            .style("top", event.pageY + 10 + "px");
+        })
+        .on("mouseleave", () => tooltip.style("opacity", 0));
+    });
+  });
+}
+
+// Call it after data loads
+loadData().then(() => {
+  updateFlowMap({ year: state.year, month: state.month, origin: state.origin });
+  renderCarrierList({ year: state.year, month: state.month, origin: state.origin });
+  renderMarketShare(); // already in your code
+  renderSeasonalHeatmap();   // <-- add this
+});
+
 // Export PNG for Vega/Altair canvases and SVG map
 async function downloadPNG(containerId) {
   const canvas = document.querySelector(`#${containerId} canvas`);

@@ -165,6 +165,27 @@
     </div>
   </section>
 
+  <!-- SEASONAL HEATMAP -->
+<section id="seasonality" class="section section--alt">
+  <div class="container">
+    <div class="section__head" data-aos="fade-up">
+      <div>
+        <p class="kicker">Seasonality</p>
+        <h3>Seasonal Passenger Heatmap</h3>
+        <p class="muted">
+          A month-by-year grid highlighting seasonal travel peaks, disruptions, and long-term recovery trends.
+        </p>
+      </div>
+      <div class="map-controls">
+        <button class="btn btn--ghost" onclick="downloadPNG('seasonHeatmap')">Save PNG</button>
+      </div>
+    </div>
+
+    <div id="seasonHeatmap" class="viz-card" data-aos="fade-up"></div>
+    <p class="caption">Figure 3. Darker colors represent months with higher passenger counts.</p>
+  </div>
+</section>
+
   <!-- Methods -->
   <section id="methods" class="section section--alt">
     <div class="container grid-two" data-aos="fade-up">
