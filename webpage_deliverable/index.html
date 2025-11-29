@@ -22,6 +22,11 @@
   <!-- D3 -->
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+
 </head>
 
 <body>
@@ -166,25 +171,48 @@
   </section>
 
   <!-- SEASONAL HEATMAP -->
-<section id="seasonality" class="section section--alt">
-  <div class="container">
-    <div class="section__head" data-aos="fade-up">
-      <div>
-        <p class="kicker">Seasonality</p>
-        <h3>Seasonal Passenger Heatmap</h3>
-        <p class="muted">
-          A month-by-year grid highlighting seasonal travel peaks, disruptions, and long-term recovery trends.
-        </p>
+  <section id="seasonality" class="section section--alt">
+    <div class="container">
+      <div class="section__head" data-aos="fade-up">
+        <div>
+          <p class="kicker">Seasonality</p>
+          <h3>Seasonal Passenger Heatmap</h3>
+          <p class="muted">
+            A month-by-year grid highlighting seasonal travel peaks, disruptions, and long-term recovery trends.
+          </p>
+        </div>
+        <div class="map-controls">
+          <button class="btn btn--ghost" onclick="downloadPNG('seasonHeatmap')">Save PNG</button>
+        </div>
       </div>
-      <div class="map-controls">
-        <button class="btn btn--ghost" onclick="downloadPNG('seasonHeatmap')">Save PNG</button>
-      </div>
-    </div>
 
-    <div id="seasonHeatmap" class="viz-card" data-aos="fade-up"></div>
-    <p class="caption">Figure 3. Darker colors represent months with higher passenger counts.</p>
-  </div>
-</section>
+      <div id="seasonHeatmap" class="viz-card" data-aos="fade-up"></div>
+      <p class="caption">Figure 3. Darker colors represent months with higher passenger counts.</p>
+    </div>
+  </section>
+
+  <!-- SEASONAL SCATTER + HISTOGRAM -->
+  <section id="seasonal-capacity" class="section section--alt">
+    <div class="container">
+      <div class="section__head" data-aos="fade-up">
+        <div>
+          <p class="kicker">Capacity Analysis</p>
+          <h3>Seasonal Capacity Patterns</h3>
+          <p class="muted">Explore how load factor varies by season, and examine the distribution of efficiency for specific regions of interest.</p>
+        </div>
+        <div class="map-controls">
+          <button class="btn btn--ghost" onclick="downloadPNG('seasonalChart')">Save PNG</button>
+        </div>
+      </div>
+
+      <!-- Vega chart container -->
+      <div id="seasonalChart" class="viz-card"></div>
+
+      <p class="caption">
+        Brushing over the scatterplot filters the histogram on the right to show only points from the selected region.
+      </p>
+    </div>
+  </section>
 
   <!-- Methods -->
   <section id="methods" class="section section--alt">

@@ -68,13 +68,13 @@ h2,h3,h4{ margin:6px 0 }
 /* Viz cards */
 .viz-card{
   margin-top:16px; height:420px; background:#fff; border:1px solid var(--border);
-  border-radius:16px; box-shadow:0 4px 18px rgba(0,0,0,.06); position:relative; overflow:hidden;
+  border-radius:16px; box-shadow:0 4px 18px rgba(0,0,0,.06); position:relative; overflow:visible;
 }
 .viz-card--tall{ height:520px }
 .viz-card--market{
   height:auto;
   min-height:520px;
-  padding:12px;
+  padding:0px;
   overflow:visible;
 }
 .map-layout{ display:flex; height:100%; gap:12px }
@@ -167,3 +167,14 @@ h2,h3,h4{ margin:6px 0 }
 .legend-chip span{ display:block; width:12px; height:12px; border-radius:4px }
 
 /* Dark theme (very light-weight) */
+
+
+#seasonalChart {
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+#seasonalChart canvas {
+  transform: none !important;
+}

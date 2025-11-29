@@ -1043,6 +1043,19 @@ loadData().then(() => {
   renderSeasonalHeatmap();   // <-- add this
 });
 
+// Seasonal Scatter + Histogram
+fetch("data/linked_scatter_histogram.json")
+  .then(r => {
+    console.log("Fetch status:", r.status);
+    return r.json();
+  })
+  .then(spec => {
+    console.log("Spec loaded:", spec);
+    vegaEmbed("#seasonalChart", spec, { actions: false })
+      .catch(err => console.error("Embed error:", err));
+  })
+  .catch(err => console.error("Fetch error:", err));
+
 // Export PNG for Vega/Altair canvases and SVG map
 async function downloadPNG(containerId) {
   const canvas = document.querySelector(`#${containerId} canvas`);
