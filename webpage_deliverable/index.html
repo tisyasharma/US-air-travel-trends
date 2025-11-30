@@ -123,9 +123,8 @@
               <div class="range-meta"><span>1</span><span id="mapTopVal">15</span></div>
             </label>
             <div class="map-zoom">
-              <button id="zoomReset" class="btn btn--ghost">Reset</button>
-              <input type="range" id="zoomSlider" min="1" max="5" value="1" step="0.1">
-              <span id="zoomVal">1.0x</span>
+              <button id="zoomReset" class="btn btn--ghost btn--reset">Reset</button>
+              <span class="zoom-label">Zoom <span id="zoomVal">1.0x</span></span>
             </div>
           </div>
           <div class="map-canvas" id="flowMapCanvas">
@@ -162,7 +161,10 @@
 
       <div class="viz-card viz-card--market" data-aos="fade-up">
         <div class="market-share-inner">
-          <div id="marketLegend" class="stacked-legend"></div>
+          <div class="legend-panel">
+            <div class="legend-title">Filter carriers</div>
+            <div id="marketLegend" class="stacked-legend"></div>
+          </div>
           <div id="marketShareChart" class="chart-area"></div>
         </div>
       </div>

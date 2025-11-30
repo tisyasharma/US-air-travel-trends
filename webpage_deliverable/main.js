@@ -10,7 +10,6 @@ toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smoot
 
 // Controls and state
 const originSelect = document.getElementById('originSelect');
-const zoomSlider = document.getElementById('zoomSlider');
 const zoomVal = document.getElementById('zoomVal');
 const zoomReset = document.getElementById('zoomReset');
 const mapYearSelect = document.getElementById('mapYearSelect');
@@ -103,7 +102,9 @@ let statesGeo = null;
 let zoomBehavior = null;
 let svgForZoom = null;
 let originsByPeriod = new Map();
+let mapSize = { width: 800, height: 600 };
 const mapFilters = { sortBy: 'PASSENGERS', top: 15 };
+let enabledCarriers = new Set();
 
 // Resolve CSS custom properties so colors stay in sync with styles.css
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -133,6 +134,12 @@ const carrierAliases = {
   'ExpressJet Airlines LLC d/b/a aha!': 'ExpressJet (aha!)',
 };
 const displayCarrier = (name) => carrierAliases[name] || name;
+const legendLabel = (name) =>
+  displayCarrier(name)
+    .replace(/\b(inc\.?|co\.?|corp\.?|corporation|l\.?l\.?c\.?)\b/gi, '')
+    .replace(/[.,]+$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 
 const tooltip = d3
   .select('body')
@@ -310,21 +317,18 @@ function syncFilters() {
   }
 }
 
-// Bidirectional zoom controls (slider <-> D3 zoom)
-if (zoomSlider) {
-  zoomSlider.addEventListener('input', () => {
-    const k = +zoomSlider.value;
-    zoomVal.textContent = `${k.toFixed(1)}x`;
-    if (svgForZoom && zoomBehavior) {
-      d3.select(svgForZoom).call(zoomBehavior.scaleTo, k);
-    }
-  });
-}
+// Zoom controls (button + label)
 if (zoomReset) {
   zoomReset.addEventListener('click', () => {
     if (svgForZoom && zoomBehavior) {
-      d3.select(svgForZoom).transition().duration(200).call(zoomBehavior.transform, d3.zoomIdentity);
-      zoomSlider.value = 1;
+      d3.select(svgForZoom)
+        .transition()
+        .duration(200)
+        .call(zoomBehavior.transform, d3.zoomIdentity)
+        .on('end', () => {
+          if (zoomVal) zoomVal.textContent = '1.0x';
+        });
+    } else {
       zoomVal.textContent = '1.0x';
     }
   });
@@ -392,6 +396,8 @@ async function updateFlowMap({ year, month, origin }) {
 
   const width = el.node().clientWidth;
   const height = el.node().clientHeight;
+  mapSize = { width, height };
+  if (zoomVal) zoomVal.textContent = '1.0x';
 
   if (!worldGeo) {
     try {
@@ -449,8 +455,7 @@ async function updateFlowMap({ year, month, origin }) {
     .scaleExtent([1, 5])
     .on('zoom', (event) => {
       gZoom.attr('transform', event.transform);
-      if (zoomSlider && zoomVal) {
-        zoomSlider.value = event.transform.k.toFixed(2);
+      if (zoomVal) {
         zoomVal.textContent = `${event.transform.k.toFixed(1)}x`;
       }
     });
@@ -628,17 +633,20 @@ function renderMapSummary(links, { year, month, origin }) {
   const list = links
     .slice(0, 15)
     .map(
-      (d) =>
-        `<div class="carrier-item"><span>${d.d_city || d.DEST} (${d.DEST})</span><span>${formatNumber(
-          d.PASSENGERS
-        )} passengers · ${formatNumber(d.DEPARTURES)} flights</span></div>`
+      (d) => `
+        <div class="summary-row">
+          <span class="summary-dest">${d.d_city || d.DEST} (${d.DEST})</span>
+          <span class="summary-pass">${formatNumber(d.PASSENGERS)} passengers</span>
+          <span class="summary-dot">·</span>
+          <span class="summary-flights">${formatNumber(d.DEPARTURES)} flights</span>
+        </div>`
     )
     .join('');
   summaryEl.innerHTML = `
     <h4>${origin} — ${monthLabel(month)} ${year}</h4>
     <p><strong>${formatNumber(totalPassengers)}</strong> passengers across ${links.length} routes.</p>
     <p class="muted">Top destination: ${top.DEST} (${formatNumber(top.PASSENGERS)} pax)</p>
-    <div style="margin-top:8px">${list}</div>
+    <div class="summary-list" style="margin-top:8px">${list}</div>
   `;
 }
 
@@ -692,11 +700,12 @@ function renderCarrierList({ year, month, origin }) {
 }
 
 // Airline market-share (100% stacked area)
-function renderMarketShare() {
+function renderMarketShare({ preserveEnabled = false } = {}) {
   const container = d3.select('#marketShareChart');
   const legendEl = document.getElementById('marketLegend');
   const node = container.node();
   container.selectAll('svg').remove();
+  container.selectAll('.chart-meta').remove();
   if (!node) return;
 
   if (!marketShare.length) {
@@ -715,35 +724,48 @@ function renderMarketShare() {
       .sort((a, b) => b.market_share - a.market_share)
       .map((d) => d.UNIQUE_CARRIER_NAME);
     const allCarriers = Array.from(new Set(marketShare.map((d) => d.UNIQUE_CARRIER_NAME))).filter(Boolean);
-    const order = [...new Set([...ranked, ...allCarriers.filter((c) => c !== 'Other')])];
-    if (allCarriers.includes('Other')) order.push('Other');
+    // Single "Other" bucket at the end
+    const order = Array.from(
+      new Set([...ranked.filter((c) => c !== 'Other'), ...allCarriers.filter((c) => c !== 'Other'), 'Other'])
+    );
     if (!order.length) {
       container.append('div').attr('class', 'muted').style('padding', '12px').text('Market share data unavailable.');
       return;
     }
 
-    // Unique, calmer colors per carrier (softened palette)
+    // Track enabled carriers; default to top 8 if nothing selected (unless preserving current selections)
+    if (!enabledCarriers.size && !preserveEnabled) {
+      ranked.slice(0, 8).forEach((c) => enabledCarriers.add(c));
+      if (!enabledCarriers.size) enabledCarriers = new Set(order.slice(0, 8));
+    }
+    const activeOrder = order.filter((c) => enabledCarriers.has(c));
+    if (!activeOrder.length) {
+      activeOrder.push(order[0]);
+      enabledCarriers.add(order[0]);
+    }
+
+    // Unique, calmer colors per carrier (muted palette, original order)
     const basePalette = [
-      '#4c6edb',
-      '#5aa0a8',
-      '#4fa772',
-      '#b7c36a',
-      '#f0b35a',
-      '#e57a61',
-      '#c35c9b',
-      '#8a6cc8',
-      '#6da2e0',
-      '#7dc8d3',
-      '#9bcf7c',
-      '#f4c06a',
-      '#f59f73',
-      '#d68bbd',
-      '#9a89d9',
-      '#6f85b3',
-      '#5d9fae',
-      '#7ab283',
-      '#d0d78c',
-      '#f2c17f',
+      '#4b7fb6',
+      '#6aa6c8',
+      '#8ac0d6',
+      '#a3d9d3',
+      '#7fb38f',
+      '#b4d38a',
+      '#f1c67a',
+      '#e6a96f',
+      '#d2846b',
+      '#c06b87',
+      '#8f7ab8',
+      '#6d88c2',
+      '#5b9ba6',
+      '#8dc5b5',
+      '#c7d7a9',
+      '#f0d3a5',
+      '#e4b49d',
+      '#cfa1b1',
+      '#9f9acb',
+      '#7ca2cc',
     ];
     const palette = order.map((_, i) => basePalette[i % basePalette.length]);
     const color = d3.scaleOrdinal().domain(order).range(palette);
@@ -763,7 +785,7 @@ function renderMarketShare() {
     );
     const seriesInput = byDate
       .map(([, val]) => val)
-      .filter((row) => order.some((c) => row[c] > 0))
+      .filter((row) => activeOrder.some((c) => row[c] > 0))
       .sort((a, b) => a.date - b.date);
     if (!seriesInput.length) {
       container.append('div').attr('class', 'muted').style('padding', '12px').text('Market share data unavailable.');
@@ -787,7 +809,7 @@ function renderMarketShare() {
 
     const stack = d3
       .stack()
-      .keys(order)
+      .keys(activeOrder)
       .value((d, key) => d[key] || 0)
       .offset(d3.stackOffsetExpand);
     const stacked = stack(seriesInput);
@@ -804,15 +826,6 @@ function renderMarketShare() {
     });
 
     const svg = container.append('svg').attr('width', width).attr('height', height);
-    // If something still fails to draw, leave a marker div for quick debugging
-    container
-      .append('div')
-      .attr('class', 'muted')
-      .style('position', 'absolute')
-      .style('right', '12px')
-      .style('bottom', '8px')
-      .style('font-size', '11px')
-      .text(`Series: ${seriesInput.length} · Carriers: ${order.length}`);
     const area = d3
       .area()
       .x((d) => x(d.data.date))
@@ -884,7 +897,7 @@ function renderMarketShare() {
           }
         }
 
-        const rows = order
+        const rows = activeOrder
           .map((c) => ({ carrier: c, share: row[c] || 0 }))
           .sort((a, b) => b.share - a.share)
           .slice(0, 8)
@@ -910,10 +923,33 @@ function renderMarketShare() {
 
     // Legend after successful render
     if (legendEl) {
+      const latestShareMap = new Map(latestSlice.map((d) => [d.UNIQUE_CARRIER_NAME, d.market_share || 0]));
       legendEl.innerHTML = order
-        .map((c) => `<span class="legend-chip"><span style="background:${color(c)}"></span>${displayCarrier(c)}</span>`)
+        .map(
+          (c, idx) => `
+          <label class="ms-legend-item">
+            <input type="checkbox" data-carrier="${c}" ${enabledCarriers.has(c) ? 'checked' : ''}/>
+            <span class="ms-legend-dot" style="background:${color(c)}"></span>
+            <span class="ms-legend-name">${idx + 1}. ${legendLabel(c)}</span>
+            <span class="ms-legend-share"></span>
+          </label>
+        `
+        )
         .join('');
+      legendEl.querySelectorAll('input[type="checkbox"]').forEach((input) => {
+        input.addEventListener('change', (e) => {
+          const carrier = e.target.getAttribute('data-carrier');
+          if (e.target.checked) enabledCarriers.add(carrier);
+          else enabledCarriers.delete(carrier);
+          renderMarketShare({ preserveEnabled: true });
+        });
+      });
     }
+
+    container
+      .append('div')
+      .attr('class', 'chart-meta')
+      .text(`Series: ${seriesInput.length} · Carriers: ${activeOrder.length}`);
   } catch (err) {
     console.error('Market share render failed', err);
     container.append('div').attr('class', 'muted').style('padding', '12px').text('Market share chart failed to render.');
