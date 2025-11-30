@@ -99,10 +99,10 @@ let worldGeo = null;
 let usaFeature = null;
 let statesMesh = null;
 let statesGeo = null;
+let nationGeo = null;
 let zoomBehavior = null;
 let svgForZoom = null;
 let originsByPeriod = new Map();
-let mapSize = { width: 800, height: 600 };
 const mapFilters = { sortBy: 'PASSENGERS', top: 15 };
 let enabledCarriers = new Set();
 
@@ -118,17 +118,28 @@ const MAP_COLORS = {
   route: cssVar('--route') || '#4B6EDC',
   highlight: cssVar('--accent1') || '#F97316',
 };
+// Colorblind-friendly palette (Tableau 20)
 const MARKET_COLORS = [
-  cssVar('--accent2') || '#5471a9',
-  cssVar('--accent1') || '#e71419',
-  cssVar('--accent3') || '#f97316',
-  cssVar('--accent4') || '#2563eb',
-  cssVar('--accent5') || '#1ea970',
-  '#8b5cf6',
-  '#14b8a6',
-  '#f59e0b',
-  '#0ea5e9',
-  '#9ca3af',
+  '#4E79A7',
+  '#A0CBE8',
+  '#F28E2B',
+  '#FFBE7D',
+  '#59A14F',
+  '#8CD17D',
+  '#B6992D',
+  '#F1CE63',
+  '#499894',
+  '#86BCB6',
+  '#E15759',
+  '#FF9D9A',
+  '#79706E',
+  '#BAB0AC',
+  '#D37295',
+  '#FABFD2',
+  '#B07AA1',
+  '#D4A6C8',
+  '#9D7660',
+  '#D7B5A6',
 ];
 const carrierAliases = {
   'ExpressJet Airlines LLC d/b/a aha!': 'ExpressJet (aha!)',
@@ -320,17 +331,8 @@ function syncFilters() {
 // Zoom controls (button + label)
 if (zoomReset) {
   zoomReset.addEventListener('click', () => {
-    if (svgForZoom && zoomBehavior) {
-      d3.select(svgForZoom)
-        .transition()
-        .duration(200)
-        .call(zoomBehavior.transform, d3.zoomIdentity)
-        .on('end', () => {
-          if (zoomVal) zoomVal.textContent = '1.0x';
-        });
-    } else {
-      zoomVal.textContent = '1.0x';
-    }
+    if (zoomVal) zoomVal.textContent = '1.0x';
+    updateFlowMap({ year: state.year, month: state.month, origin: state.origin });
   });
 }
 
@@ -396,7 +398,6 @@ async function updateFlowMap({ year, month, origin }) {
 
   const width = el.node().clientWidth;
   const height = el.node().clientHeight;
-  mapSize = { width, height };
   if (zoomVal) zoomVal.textContent = '1.0x';
 
   if (!worldGeo) {
@@ -416,9 +417,11 @@ async function updateFlowMap({ year, month, origin }) {
       const states = await d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json');
       statesMesh = topojson.mesh(states, states.objects.states, (a, b) => a !== b);
       statesGeo = topojson.feature(states, states.objects.states);
+      nationGeo = topojson.feature(states, states.objects.nation);
     } catch (err) {
       statesMesh = null;
       statesGeo = null;
+      nationGeo = null;
     }
   }
   const countries = topojson.feature(worldGeo, worldGeo.objects.countries);
@@ -428,10 +431,12 @@ async function updateFlowMap({ year, month, origin }) {
       countries.features.find((f) => (f.properties.name || '').includes('United States')) ||
       null;
   }
-  // Fallback to a world outline if we can't isolate the USA feature
-  const land = usaFeature
-    ? { type: 'FeatureCollection', features: [usaFeature] }
-    : { type: 'FeatureCollection', features: countries.features };
+  // Prefer nation geometry (keeps Great Lakes clean); fallback to country outline
+  const land = nationGeo
+    ? nationGeo
+    : usaFeature
+      ? { type: 'FeatureCollection', features: [usaFeature] }
+      : { type: 'FeatureCollection', features: countries.features };
 
   const projection = d3
     .geoAlbersUsa()
@@ -744,30 +749,8 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
       enabledCarriers.add(order[0]);
     }
 
-    // Unique, calmer colors per carrier (muted palette, original order)
-    const basePalette = [
-      '#4b7fb6',
-      '#6aa6c8',
-      '#8ac0d6',
-      '#a3d9d3',
-      '#7fb38f',
-      '#b4d38a',
-      '#f1c67a',
-      '#e6a96f',
-      '#d2846b',
-      '#c06b87',
-      '#8f7ab8',
-      '#6d88c2',
-      '#5b9ba6',
-      '#8dc5b5',
-      '#c7d7a9',
-      '#f0d3a5',
-      '#e4b49d',
-      '#cfa1b1',
-      '#9f9acb',
-      '#7ca2cc',
-    ];
-    const palette = order.map((_, i) => basePalette[i % basePalette.length]);
+    // Colorblind-friendly palette (reuse MARKET_COLORS)
+    const palette = order.map((_, i) => MARKET_COLORS[i % MARKET_COLORS.length]);
     const color = d3.scaleOrdinal().domain(order).range(palette);
 
     // Group by month, keep pre-computed percentages
@@ -905,7 +888,7 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
           .join('');
         const focusColor = carrierUnder ? color(carrierUnder) : null;
         const focusLine = carrierUnder
-          ? `<span style="color:${focusColor}">${displayCarrier(carrierUnder)}</span> — ${formatPct(shareExact)}`
+          ? `<strong style="color:${focusColor}">${displayCarrier(carrierUnder)}</strong> — ${formatPct(shareExact)}`
           : 'Market share';
         const html = `<div><strong>${formatMonth(row.date)}</strong><div class="muted">${focusLine}</div></div>${rows}`;
         const [px, py] = d3.pointer(event, document.body);
