@@ -1066,7 +1066,7 @@ async function renderSeasonalHeatmap() {
   markers
     .append("circle")
     .attr("r", 3)
-    .attr("fill", "#ef4444");
+    .attr("fill", "#e71419");
 
   markers
     .append("text")
