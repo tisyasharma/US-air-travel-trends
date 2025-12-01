@@ -958,7 +958,7 @@ async function renderSeasonalHeatmap() {
     });
   });
 
-    // Determine meaningful scale (ignore tiny values)
+  // Determine meaningful scale (ignore tiny values)
   const meaningfulValues = aggregated.flatMap(([year, entries]) =>
     entries.map(([month, total]) => total).filter(v => v > 30_000_000)
   );
@@ -1082,8 +1082,8 @@ async function renderSeasonalHeatmap() {
 loadData().then(() => {
   updateFlowMap({ year: state.year, month: state.month, origin: state.origin });
   renderCarrierList({ year: state.year, month: state.month, origin: state.origin });
-  renderMarketShare(); // already in your code
-  renderSeasonalHeatmap();   // <-- add this
+  renderMarketShare();
+  renderSeasonalHeatmap(); 
 });
 
 // Seasonal Scatter + Histogram
