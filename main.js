@@ -1,3 +1,4 @@
+// Page interactions and map visualization logic for filters, data loading, and rendering
 // Initialize AOS (scroll animations)
 AOS.init({ once: true, duration: 600, easing: 'ease-out' });
 
@@ -106,7 +107,7 @@ let originsByPeriod = new Map();
 const mapFilters = { sortBy: 'PASSENGERS', top: 15 };
 let enabledCarriers = new Set();
 
-// Resolve CSS custom properties so colors stay in sync with styles.css
+// Resolve CSS custom properties so colors can be in sync with styles.css
 const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
 const MAP_COLORS = {
@@ -118,6 +119,7 @@ const MAP_COLORS = {
   route: cssVar('--route') || '#4B6EDC',
   highlight: cssVar('--accent1') || '#F97316',
 };
+
 // Colorblind-friendly palette with 22 distinct colors (cool/neutral, on-theme)
 const MARKET_COLORS = [
   '#1F4B99', '#4E6FB8', '#7896CE', '#AFC2E6', '#C7D6ED', // blues
@@ -689,7 +691,7 @@ function renderCarrierList({ year, month, origin }) {
       .join('');
 }
 
-// Airline market-share (100% stacked area)
+// Airline market-share with 100% stacked area
 function renderMarketShare({ preserveEnabled = false } = {}) {
   const container = d3.select('#marketShareChart');
   const legendEl = document.getElementById('marketLegend');
@@ -707,13 +709,14 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
   try {
     if (legendEl) legendEl.innerHTML = '';
 
-    // Order carriers by latest month (keeps mergers sensible), push Other to the end
+    // Order carriers by latest month that keeps mergers sensible, push Other to the end
     const latestDate = d3.max(marketShare, (d) => d.date);
     const latestSlice = marketShare.filter((d) => +d.date === +latestDate);
     const ranked = latestSlice
       .sort((a, b) => b.market_share - a.market_share)
       .map((d) => d.UNIQUE_CARRIER_NAME);
     const allCarriers = Array.from(new Set(marketShare.map((d) => d.UNIQUE_CARRIER_NAME))).filter(Boolean);
+
     // Single "Other" bucket at the end
     const order = Array.from(
       new Set([...ranked.filter((c) => c !== 'Other'), ...allCarriers.filter((c) => c !== 'Other'), 'Other'])
@@ -723,7 +726,7 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
       return;
     }
 
-    // Track enabled carriers; default to top 8 if nothing selected (unless preserving current selections)
+    // Track enabled carriers and default to top 8 if nothing selected, unless preserving current selections
     if (!enabledCarriers.size && !preserveEnabled) {
       ranked.slice(0, 8).forEach((c) => enabledCarriers.add(c));
       if (!enabledCarriers.size) enabledCarriers = new Set(order.slice(0, 8));
@@ -734,11 +737,11 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
       enabledCarriers.add(order[0]);
     }
 
-    // Colorblind-friendly palette (reuse MARKET_COLORS)
+    // Colorblind-friendly palette (using MARKET_COLORS)
     const palette = order.map((_, i) => MARKET_COLORS[i % MARKET_COLORS.length]);
     const color = d3.scaleOrdinal().domain(order).range(palette);
 
-    // Group by month, keep pre-computed percentages
+    // Group by month, keep precomputed percentages
     const byDate = d3.rollups(
       marketShare,
       (v) => {
@@ -931,10 +934,10 @@ async function renderSeasonalHeatmap() {
   const width = heatEl.node().clientWidth;
   const height = heatEl.node().clientHeight;
 
-  // Load your monthly totals (precomputed JSON — see preprocessing below)
+  // Load the monthly totals (precomputed JSON — see preprocessing below)
   const monthly = await fetch("data/monthly_metrics.json").then(r => r.json());
 
-  // Extract months 1–12 & all years
+  // Extract months 1–12 and all years
   const years = [...new Set(monthly.map(d => d.YEAR))].sort((a,b) => a-b);
   const months = d3.range(1,13);
 

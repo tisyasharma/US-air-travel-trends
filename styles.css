@@ -77,15 +77,6 @@ h2,h3,h4{ margin:6px 0 }
   padding:0;
   overflow:hidden;
 }
-.map-layout{ display:flex; height:100%; gap:12px }
-.map-filters{
-  width:220px; padding:12px; border-right:1px solid var(--border);
-  display:flex; flex-direction:column; gap:12px; background:var(--paper); border-radius:24px 0 0 24px;
-}
-.map-filters h4{ margin:0; font-size:14px }
-.map-filters label{ font-size:13px; color:#6b7280; display:flex; flex-direction:column; gap:6px }
-.map-canvas{ flex:1; position:relative; height:100% }
-.map-canvas{ overflow:hidden; }
 .viz-card .vega-embed, .viz-card .vega-embed > div{ width:100% !important; height:100% !important }
 .viz-card canvas{ width:100% !important; height:100% !important }
 .caption{ margin-top:8px; color:#6b7280; font-size:13px }
@@ -107,13 +98,13 @@ h2,h3,h4{ margin:6px 0 }
   background:var(--accent2); color:#fff; cursor:pointer; display:none; box-shadow:0 6px 18px rgba(0,0,0,.12)
 }
 
-/* Routes map */
+/* Routes map layout and controls */
 .map-controls{ display:flex; gap:12px; align-items:center; flex-wrap:wrap }
 .map-controls label{ color:#6b7280; font-size:13px; display:flex; flex-direction:column; gap:4px; margin:0 }
 .map-controls .btn{ align-self:flex-end; padding:10px 14px; white-space:nowrap }
 .map-legend{ display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:8px; color:#6b7280; font-size:13px }
 .legend-item{ display:inline-flex; align-items:center; gap:6px }
-.map-layout{ display:flex; height:100%; gap:12px }
+.map-layout{ display:flex; height:100%; gap:12px; position:relative; overflow:hidden }
 .map-filters{
   width:240px; padding:14px; border-right:1px solid var(--border);
   display:flex; flex-direction:column; gap:12px; background:var(--paper);
@@ -121,7 +112,8 @@ h2,h3,h4{ margin:6px 0 }
 .map-filters h4{ margin:0; font-size:14px }
 .map-filters label{ font-size:13px; color:#6b7280; display:flex; flex-direction:column; gap:6px }
 .map-canvas{ flex:1; position:relative; height:100% }
-.map-panels{ display:grid; grid-template-columns:1fr; gap:16px; margin-top:16px }
+.map-canvas svg{ display:block }
+.map-panels{ display:grid; grid-template-columns:1fr; gap:16px; margin-top:16px; position:relative; z-index:2 }
 @media(min-width:960px){ .map-panels{ grid-template-columns:1fr 1fr } }
 .map-panels h4{ margin:0 0 8px 0 }
 .map-panels .muted{ margin:0 }

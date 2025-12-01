@@ -1,10 +1,9 @@
 """
-Data extracts from the cleaned T-100 files for the map visualization
+Data extracts from the cleaned T-100 files for the map visualization.
 
-- Top 200 routes per (year, month) with coordinates for map routes
-- Top carriers per origin for those map routes (per year & month)
-- Monthly totals (with domestic/international split) for trend/heatmap charts
-
+- Top 200 routes per (year, month) with coordinates for map routes.
+- Top carriers per origin for those map routes (per year & month).
+- Monthly totals (with domestic/international split) for trend/heatmap charts.
 """
 
 from __future__ import annotations
@@ -22,7 +21,11 @@ OUT_DIR = ROOT / "webpage_deliverable" / "data"
 
 
 def load_airports() -> pd.DataFrame:
-    # Airport lookup (lat/lon, city, country) keyed by IATA
+    """
+    parameters: none
+    returns: pd.DataFrame indexed by IATA with airport metadata
+    function: airport lookup (lat/lon, city, country) keyed by IATA
+    """
     airports = pd.read_csv(AIRPORTS_PATH)
     airports["iata"] = airports["iata"].str.upper()
     cols = ["iata", "name", "city", "state", "country", "latitude", "longitude"]
@@ -30,7 +33,11 @@ def load_airports() -> pd.DataFrame:
 
 
 def load_flights() -> pd.DataFrame:
-    # Pull only the columns we need for the web extracts
+    """
+    parameters: none
+    returns: pd.DataFrame with flight records (reduced columns)
+    function: load cleaned flight CSVs and keep only columns needed for web extracts
+    """
     usecols = [
         "YEAR",
         "MONTH",
@@ -51,7 +58,11 @@ def load_flights() -> pd.DataFrame:
 
 
 def attach_airport_meta(df: pd.DataFrame, airports: pd.DataFrame) -> pd.DataFrame:
-    # Add origin/destination metadata columns
+    """
+    parameters: df (route-level records), airports (lookup indexed by IATA)
+    returns: pd.DataFrame merged with origin/destination metadata
+    function: append airport lat/lon and place info for both origin and destination
+    """
     origin_meta = airports.add_prefix("o_")
     dest_meta = airports.add_prefix("d_")
     df = df.merge(origin_meta, left_on="ORIGIN", right_index=True, how="left")
@@ -61,6 +72,11 @@ def attach_airport_meta(df: pd.DataFrame, airports: pd.DataFrame) -> pd.DataFram
 
 
 def classify_sector(origin_country: str, dest_country: str) -> str:
+    """
+    parameters: origin_country, dest_country
+    returns: string label (Domestic, International, Unknown)
+    function: label a route as domestic vs international
+    """
     if origin_country == "USA" and dest_country == "USA":
         return "Domestic"
     if pd.isna(origin_country) or pd.isna(dest_country):
@@ -69,7 +85,11 @@ def classify_sector(origin_country: str, dest_country: str) -> str:
 
 
 def build_route_links(flights: pd.DataFrame, airports: pd.DataFrame) -> pd.DataFrame:
-    # Aggregate to year-month routes
+    """
+    parameters: flights (raw flight rows), airports (lookup)
+    returns: pd.DataFrame of top routes per year-month with coords and load_factor
+    function: aggregate flights to routes, attach airport meta, rank, trim to top 200 per period
+    """
     routes = (
         flights.groupby(["YEAR", "MONTH", "ORIGIN", "DEST"], as_index=False)
         .agg(
@@ -95,7 +115,11 @@ def build_route_links(flights: pd.DataFrame, airports: pd.DataFrame) -> pd.DataF
 
 
 def build_carrier_rankings(flights: pd.DataFrame, origins: pd.Series) -> pd.DataFrame:
-    # Per origin/year/month carrier leaderboard (trimmed to top 15 to fit in stat box)
+    """
+    parameters: flights (raw rows), origins (iterable of origin airports)
+    returns: pd.DataFrame of top carriers per origin/year/month
+    function: summarize carriers by passengers/departures/seats and keep top 12 per origin-period
+    """
     carriers = flights[flights["ORIGIN"].isin(origins)]
     carriers = (
         carriers.groupby(
@@ -118,7 +142,11 @@ def build_carrier_rankings(flights: pd.DataFrame, origins: pd.Series) -> pd.Data
 def build_monthly_metrics(
     flights: pd.DataFrame, country_lookup: Dict[str, str]
 ) -> pd.DataFrame:
-    # Monthly totals split by domestic/international (used to exist for other charts)
+    """
+    parameters: flights (raw rows), country_lookup (IATA --> country)
+    returns: pd.DataFrame of monthly totals by sector with load factor
+    function: tag domestic/international and aggregate monthly passengers/flights/seats
+    """
     f = flights.copy()
     f["o_country"] = f["ORIGIN"].map(country_lookup)
     f["d_country"] = f["DEST"].map(country_lookup)
@@ -144,7 +172,11 @@ def build_monthly_metrics(
 def build_carrier_market_share(
     flights: pd.DataFrame, airports: pd.DataFrame
 ) -> pd.DataFrame:
-    # Domestic market share per carrier (top 10 per month + "Other"), normalized to 100%
+    """
+    parameters: flights (raw rows), airports (lookup indexed by IATA)
+    returns: pd.DataFrame of monthly domestic market share by carrier (top 10 + Other)
+    function: compute domestic-only passenger share per carrier each month, normalize to 100%
+    """
     country_lookup = airports["country"].to_dict()
     f = flights.copy()
     f["o_country"] = f["ORIGIN"].map(country_lookup)
@@ -178,7 +210,11 @@ def build_carrier_market_share(
 
 
 def main():
-    # Wire it all together and write JSON for the frontend
+    """
+    parameters: none
+    returns: None
+    function: orchestrate loading, aggregating, and writing JSON extracts for the frontend
+    """
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     airports = load_airports()
     flights = load_flights()
