@@ -201,9 +201,6 @@ h2,h3,h4{ margin:6px 0 }
   .legend-panel{ width:100%; min-width:0; border-right:none; border-bottom:1px solid var(--border); }
 }
 
-/* Dark theme (very light-weight) */
-
-
 #seasonalChart {
   padding: 0 !important;
   margin: 0 !important;
