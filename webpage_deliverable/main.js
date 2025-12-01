@@ -118,28 +118,13 @@ const MAP_COLORS = {
   route: cssVar('--route') || '#4B6EDC',
   highlight: cssVar('--accent1') || '#F97316',
 };
-// Colorblind-friendly palette (Tableau 20)
+// Colorblind-friendly palette with 22 distinct colors (cool/neutral, on-theme)
 const MARKET_COLORS = [
-  '#4E79A7',
-  '#A0CBE8',
-  '#F28E2B',
-  '#FFBE7D',
-  '#59A14F',
-  '#8CD17D',
-  '#B6992D',
-  '#F1CE63',
-  '#499894',
-  '#86BCB6',
-  '#E15759',
-  '#FF9D9A',
-  '#79706E',
-  '#BAB0AC',
-  '#D37295',
-  '#FABFD2',
-  '#B07AA1',
-  '#D4A6C8',
-  '#9D7660',
-  '#D7B5A6',
+  '#1F4B99', '#4E6FB8', '#7896CE', '#AFC2E6', '#C7D6ED', // blues
+  '#0F6A6A', '#2F8F8F', '#5BA9A9', '#8CC6C6', '#B7E0DF', // teals
+  '#3A6E3A', '#5F915F', '#8AB78A', '#B7D8B7', '#D9EBD9', // greens
+  '#6B5FA5', '#8A7BC1', '#A897DD', '#C3B3F0', '#DDD3FF', // violets
+  '#586F7C', '#7A8E9A' // neutrals
 ];
 const carrierAliases = {
   'ExpressJet Airlines LLC d/b/a aha!': 'ExpressJet (aha!)',
