@@ -65,9 +65,9 @@
       <p class="kicker">Overview</p>
       <h2>What this analysis shows</h2>
       <p>
-        We analyze monthly U.S. air travel metrics like passengers, number of flights, seat availability,
-        and load factor to uncover long‑run trends, event‑driven changes, and seasonal patterns. This website is able to 
-        dynamically filter results as well. 
+        An interactive view of U.S. air travel patterns (1999–2024): map the top destinations for any origin, year,
+        and month. Also see which carriers serve that origin, and explore the market share and seasonality trends across the
+        the U.S. over 25 years.
       </p>
     </div>
   </section>
@@ -228,14 +228,18 @@
         <p class="kicker">Methods</p>
         <h4>Preprocessing</h4>
         <ul class="list">
-          <li>ADD DETAILS ABOUT PREPROCESSING LATER</li>
+          <li>Cleaned BTS T-100 segment data (1999–2024) and standardized airport codes.</li>
+          <li>Aggregated routes by year/month with passengers, flights, seats, and load factor.</li>
+          <li>Compiled carrier totals per origin and domestic market-share summaries.</li>
         </ul>
       </div>
       <div>
         <h4>Sources & Credits</h4>
         <ul class="list">
           <li>U.S. Bureau of Transportation Statistics (BTS) T-100</li>
-          <li>Visualization: D3.js.</li>
+          <li>Map & custom visuals: D3.js + TopoJSON (basemap) + custom CSS.</li>
+          <li>Charts: Altair/Vega‑Lite (via vega-embed) for stacked areas, heatmaps, scatterplots.</li>
+          <li>Data preparation libraries: Python, Pandas, and custom scripts to build web-ready JSON extracts.</li>
           <li>Design: Custom CSS.</li>
         </ul>
       </div>

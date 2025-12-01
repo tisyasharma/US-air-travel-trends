@@ -1040,6 +1040,26 @@ async function renderSeasonalHeatmap() {
         .on("mouseleave", () => tooltip.style("opacity", 0));
     });
   });
+
+  // Annotate major US events on the y-axis
+  const events = [
+    { year: 2001, label: "9/11" },
+    { year: 2008, label: "Great Recession" },
+    { year: 2020, label: "COVID-19" },
+  ];
+  const eventLookup = new Map(events.map((e) => [e.year, e.label]));
+  g.selectAll(".event-label")
+    .data(years.filter((y) => eventLookup.has(y)))
+    .enter()
+    .append("text")
+    .attr("class", "event-label")
+    .attr("x", -18)
+    .attr("y", (y) => years.indexOf(y) * cellH + cellH / 2)
+    .attr("text-anchor", "end")
+    .attr("alignment-baseline", "middle")
+    .attr("font-size", 11)
+    .attr("fill", "#ef4444")
+    .text((y) => eventLookup.get(y));
 }
 
 // Call it after data loads
