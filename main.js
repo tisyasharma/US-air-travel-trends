@@ -978,9 +978,11 @@ async function renderSeasonalHeatmap() {
       .attr("width", width)
       .attr("height", height);
 
-  const margin = { top: 40, right: 20, bottom: 30, left: 55 };
-  const cellW = (width - margin.left - margin.right) / 12;
-  const cellH = (height - margin.top - margin.bottom) / years.length;
+  const margin = { top: 40, right: 90, bottom: 30, left: 55 };
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+  const cellW = innerWidth / 12;
+  const cellH = innerHeight / years.length;
 
   const g = svg.append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -1041,23 +1043,37 @@ async function renderSeasonalHeatmap() {
     });
   });
 
-  // Annotate major US events on the y-axis
+  // Annotate major US events along the y-axis
   const events = [
     { year: 2001, label: "9/11" },
-    { year: 2008, label: "Great Recession" },
+    { year: 2008, label: "Recession" },
     { year: 2020, label: "COVID-19" },
   ];
   const eventLookup = new Map(events.map((e) => [e.year, e.label]));
-  g.selectAll(".event-label")
+  const eventGroup = svg
+    .append("g")
+    .attr("transform", `translate(${margin.left + innerWidth + 20},${margin.top})`)
+    .attr("class", "event-markers");
+
+  const markers = eventGroup
+    .selectAll(".event-marker")
     .data(years.filter((y) => eventLookup.has(y)))
     .enter()
+    .append("g")
+    .attr("class", "event-marker")
+    .attr("transform", (y) => `translate(0, ${years.indexOf(y) * cellH + cellH / 2})`);
+
+  markers
+    .append("circle")
+    .attr("r", 3)
+    .attr("fill", "#ef4444");
+
+  markers
     .append("text")
-    .attr("class", "event-label")
-    .attr("x", -18)
-    .attr("y", (y) => years.indexOf(y) * cellH + cellH / 2)
-    .attr("text-anchor", "end")
-    .attr("alignment-baseline", "middle")
-    .attr("font-size", 11)
+    .attr("x", 8)
+    .attr("dy", "0.32em")
+    .attr("text-anchor", "start")
+    .attr("font-size", 10.5)
     .attr("fill", "#ef4444")
     .text((y) => eventLookup.get(y));
 }
