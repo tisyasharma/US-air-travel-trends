@@ -732,6 +732,7 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
       if (!enabledCarriers.size) enabledCarriers = new Set(order.slice(0, 8));
     }
     const activeOrder = order.filter((c) => enabledCarriers.has(c));
+    const inactiveOrder = order.filter((c) => !enabledCarriers.has(c));
     if (!activeOrder.length) {
       activeOrder.push(order[0]);
       enabledCarriers.add(order[0]);
@@ -755,8 +756,10 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
       (d) => d.date.getTime()
     );
     const seriesInput = byDate
-      .map(([, val]) => val)
-      .filter((row) => activeOrder.some((c) => row[c] > 0))
+      .map(([, val]) => {
+        const hiddenShare = inactiveOrder.reduce((sum, c) => sum + (val[c] || 0), 0);
+        return { ...val, __hidden: hiddenShare };
+      })
       .sort((a, b) => a.date - b.date);
     if (!seriesInput.length) {
       container.append('div').attr('class', 'muted').style('padding', '12px').text('Market share data unavailable.');
@@ -778,12 +781,15 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
       .range([margin.left, width - margin.right]);
     const y = d3.scaleLinear().domain([0, 1]).range([height - margin.bottom, margin.top]);
 
+    const stackKeys = [...activeOrder, '__hidden'];
     const stack = d3
       .stack()
-      .keys(activeOrder)
+      .keys(stackKeys)
       .value((d, key) => d[key] || 0)
-      .offset(d3.stackOffsetExpand);
+      .offset(d3.stackOffsetNone);
     const stacked = stack(seriesInput);
+    const hiddenSeries = stacked.find((s) => s.key === '__hidden');
+    const visibleStack = stacked.filter((s) => s.key !== '__hidden');
 
     console.log('market-share debug', {
       rows: marketShare.length,
@@ -804,10 +810,26 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
       .y1((d) => y(d[1]))
       .curve(d3.curveMonotoneX);
 
+    // Draw the aggregated hidden share (unselected carriers) first so visible bands sit on top
+    const hasHidden =
+      hiddenSeries && hiddenSeries.some((seg) => seg[1] - seg[0] > 0.00001 && Number.isFinite(seg[1]));
+    if (hasHidden) {
+      svg
+        .append('g')
+        .selectAll('path')
+        .data([hiddenSeries])
+        .join('path')
+        .attr('fill', '#e5e7eb')
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 0.6)
+        .attr('opacity', 0.8)
+        .attr('d', area);
+    }
+
     svg
       .append('g')
       .selectAll('path')
-      .data(stacked)
+      .data(visibleStack)
       .join('path')
       .attr('fill', (d) => color(d.key))
       .attr('stroke', '#fff')
@@ -868,15 +890,26 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
           }
         }
 
-        const rows = activeOrder
-          .map((c) => ({ carrier: c, share: row[c] || 0 }))
-          .sort((a, b) => b.share - a.share)
-          .slice(0, 8)
-          .map((d) => `<div>${displayCarrier(d.carrier)}: ${formatPct(d.share)}</div>`)
+        const hiddenShare = row.__hidden || 0;
+        const rows = [
+          ...activeOrder
+            .map((c) => ({ carrier: c, share: row[c] || 0 }))
+            .filter((d) => d.share > 0)
+            .sort((a, b) => b.share - a.share)
+            .slice(0, 8),
+          ...(hiddenShare > 0 ? [{ carrier: '__hidden', share: hiddenShare }] : []),
+        ]
+          .map((d) => {
+            const label = d.carrier === '__hidden' ? 'Unselected carriers' : displayCarrier(d.carrier);
+            return `<div>${label}: ${formatPct(d.share)}</div>`;
+          })
           .join('');
-        const focusColor = carrierUnder ? color(carrierUnder) : null;
+        const focusColor =
+          carrierUnder === '__hidden' ? '#9ca3af' : carrierUnder ? color(carrierUnder) : null;
         const focusLine = carrierUnder
-          ? `<strong style="color:${focusColor}">${displayCarrier(carrierUnder)}</strong> — ${formatPct(shareExact)}`
+          ? `<strong style="color:${focusColor}">${
+              carrierUnder === '__hidden' ? 'Unselected carriers' : displayCarrier(carrierUnder)
+            }</strong> — ${formatPct(shareExact)}`
           : 'Market share';
         const html = `<div><strong>${formatMonth(row.date)}</strong><div class="muted">${focusLine}</div></div>${rows}`;
         const [px, py] = d3.pointer(event, document.body);
@@ -920,7 +953,9 @@ function renderMarketShare({ preserveEnabled = false } = {}) {
     container
       .append('div')
       .attr('class', 'chart-meta')
-      .text(`Series: ${seriesInput.length} · Carriers: ${activeOrder.length}`);
+      .text(
+        `Series: ${seriesInput.length} · Carriers: ${activeOrder.length}${hasHidden ? ' · Grey band = unselected share' : ''}`
+      );
   } catch (err) {
     console.error('Market share render failed', err);
     container.append('div').attr('class', 'muted').style('padding', '12px').text('Market share chart failed to render.');
