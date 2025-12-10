@@ -1122,7 +1122,7 @@ loadData().then(() => {
 });
 
 // Seasonal Scatter + Histogram
-fetch("data/linked_scatter_histogram.json")
+fetch("linked_scatter_histogram.json")
   .then(r => {
     console.log("Fetch status:", r.status);
     return r.json();
