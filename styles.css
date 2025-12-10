@@ -206,3 +206,21 @@ h2,h3,h4{ margin:6px 0 }
 #seasonalChart canvas {
   transform: none !important;
 }
+
+.viz-card {
+  background: var(--surface);
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.timeline-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+#travel-timeline .viz-card {
+  height: auto !important;
+}
