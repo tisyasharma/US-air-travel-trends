@@ -252,3 +252,40 @@ h2,h3,h4{ margin:6px 0 }
   line-height: 1.6;
   max-width: 70ch;
 }
+
+/* References Section */
+.reference-list {
+  margin-top: 16px;
+  padding-left: 20px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.reference-list li {
+  margin-bottom: 12px;
+}
+
+.reference-list a {
+  color: var(--accent2);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.reference-list a:hover {
+  text-decoration: underline;
+  color: var(--accent4);
+}
+
+/* Conclusion Section */
+#conclusion h3 {
+  margin-bottom: 1rem;
+  color: var(--ink);
+}
+
+.conclusion-text {
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--muted);
+  margin-bottom: 1.4rem;
+  max-width: 70ch;
+}
