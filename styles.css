@@ -224,3 +224,31 @@ h2,h3,h4{ margin:6px 0 }
 #travel-timeline .viz-card {
   height: auto !important;
 }
+
+/* Visualization Takeaways Section */
+#viz-takeaways {
+  padding: 64px 0;         /* Match your .section spacing */
+}
+
+#viz-takeaways .viz-block {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+#viz-takeaways h2 {
+  color: var(--accent2);
+  margin-bottom: 24px;
+}
+
+#viz-takeaways h3 {
+  font-size: 20px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+#viz-takeaways p {
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 70ch;
+}
