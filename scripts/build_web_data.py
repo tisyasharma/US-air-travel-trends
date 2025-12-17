@@ -9,6 +9,7 @@ Data extracts from the cleaned T-100 files for the map visualization.
 from __future__ import annotations
 
 import calendar
+import shutil
 from pathlib import Path
 from typing import Dict, List
 
@@ -59,6 +60,20 @@ def describe_outputs(filename: str) -> str:
     function: show where the JSON extracts were written
     """
     return ", ".join(str(out / filename) for out in OUT_DIRS)
+
+
+def mirror_json_assets() -> None:
+    """
+    parameters: none
+    returns: None
+    function: ensure top-level JSON assets (e.g., chart specs) in data/ are mirrored to the deliverable folder
+    """
+    for src in DATA_DIR.glob("*.json"):
+        for out_dir in OUT_DIRS:
+            if out_dir == DATA_DIR:
+                continue
+            out_dir.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, out_dir / src.name)
 
 
 def load_airports() -> pd.DataFrame:
@@ -277,11 +292,13 @@ def main():
     write_json(carrier_rankings, "carriers_by_origin.json")
     write_json(monthly, "monthly_metrics.json", date_format="iso")
     write_json(market_share, "carrier_market_share.json", date_format="iso")
+    mirror_json_assets()
 
     print(f"Wrote {len(routes):,} route links -> {describe_outputs('flow_links.json')}")
     print(f"Carriers: {len(carrier_rankings):,} rows -> {describe_outputs('carriers_by_origin.json')}")
     print(f"Monthly metrics: {len(monthly):,} rows -> {describe_outputs('monthly_metrics.json')}")
     print(f"Market share: {len(market_share):,} rows -> {describe_outputs('carrier_market_share.json')}")
+    print(f"Synced JSON assets from {DATA_DIR} to {', '.join(str(p) for p in OUT_DIRS if p != DATA_DIR)}")
 
 
 if __name__ == "__main__":

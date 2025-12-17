@@ -1,1 +1,16 @@
 .DS_Store
+
+# Keep bulky source data out of Git (JSON outputs are still tracked)
+data/raw_data/
+data/clean_data/
+raw_data/
+clean_data/
+
+# Python build artifacts
+__pycache__/
+*.pyc
+
+# Large artifacts
+*.arrow
+*.parquet
+*.feather
