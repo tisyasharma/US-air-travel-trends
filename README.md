@@ -3,7 +3,7 @@
 ## Prerequisites
 - Python 3.9+ with `pip`
 - Source data needed:
-  - `clean_data/flights_*_clean.csv` (cleaned flight records)
+  - `data/clean_data/flights_*_clean.csv` (cleaned flight records)
 
 ## Install
 ```bash
@@ -15,7 +15,7 @@ Runs the transform to produce the JSON extracts consumed by the webpage.
 ```bash
 python scripts/build_web_data.py
 ```
-Outputs land in `webpage_deliverable/data/`:
+Outputs land in `data/` (mirrored to `webpage_deliverable/data/` for the submission bundle):
 - `flow_links.json`
 - `carriers_by_origin.json`
 - `monthly_metrics.json`
