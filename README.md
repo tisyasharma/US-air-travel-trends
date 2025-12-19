@@ -2,10 +2,10 @@
 
 Interactive visuals of U.S. flight trends (1999–2024): route flows, carrier market share, and seasonal capacity using cleaned T-100 data.
 
-Live demo: replace with your GitHub Pages URL, e.g. `https://<username>.github.io/US-air-travel-trends/`. The steps below are only needed if you want to rebuild data or preview locally.
+Live demo: https://tisyasharma.github.io/US-air-travel-trends/. The steps below are only needed if you want to rebuild data or preview locally.
 
 ## Contents
-- [Site](site/index.html) — static page and assets (root index redirects here)
+- [Site](index.html) — static page and assets
 - [Data pipeline](scripts/build_web_data.py) — generates JSON feeds
 - [Data outputs](data/) — JSONs used by the site (mirrored to `webpage_deliverable/data/`)
 - [Notebooks](notebooks/) — cleaning and analysis
@@ -23,7 +23,7 @@ Add your visuals under `docs/` and update the links:
 - ![Market share](docs/market-share.png) — stacked area chart
 
 ## Project layout
-- `site/index.html`, `site/main.js`, `site/styles.css` — static site (root `index.html` redirects here).
+- `index.html`, `main.js`, `styles.css` — static site.
 - `data/` — JSON feeds for the site plus raw/clean CSV inputs (not committed).
 - `webpage_deliverable/data/` — bundled copy of the JSON feeds for submission.
 - `scripts/build_web_data.py` — prepares JSON extracts from cleaned CSVs.
@@ -48,6 +48,7 @@ Add your visuals under `docs/` and update the links:
 ## Data pipeline
 - Raw T-100 files (1999–2024) → `data/raw_data/`
 - Cleaned flight CSVs → `data/clean_data/`
+- Airport lookup → `data/airports.csv` (required for rebuilds; not included in the repo)
 - `scripts/build_web_data.py` joins airport metadata, trims to top routes/carriers, and writes the JSON feeds.
 - Outputs mirrored to `data/` and `webpage_deliverable/data/` for the static site (including non-generated JSON assets in `data/`).
 - If source data changes, rerun the build script and refresh the page.

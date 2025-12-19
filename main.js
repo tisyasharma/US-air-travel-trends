@@ -173,12 +173,12 @@ function debounce(fn, wait = 150) {
   };
 }
 
-// Load the prepared JSON extracts from ../data/ and coerce fields to numbers
+// Load the prepared JSON extracts from data/ and coerce fields to numbers
 async function loadData() {
   const [linksRaw, carrierDataRaw, marketShareRaw] = await Promise.all([
-    fetch('../data/flow_links.json').then((r) => r.json()),
-    fetch('../data/carriers_by_origin.json').then((r) => r.json()),
-    fetch('../data/carrier_market_share.json').then((r) => r.json()),
+    fetch('data/flow_links.json').then((r) => r.json()),
+    fetch('data/carriers_by_origin.json').then((r) => r.json()),
+    fetch('data/carrier_market_share.json').then((r) => r.json()),
   ]);
 
   // Omit incomplete 2025 data
@@ -973,7 +973,7 @@ async function renderSeasonalHeatmap() {
   const height = heatEl.node().clientHeight;
 
   // Load the monthly totals (precomputed JSON; see build script)
-  const monthly = await fetch("../data/monthly_metrics.json").then(r => r.json());
+  const monthly = await fetch("data/monthly_metrics.json").then(r => r.json());
 
   // Extract months 1–12 and all years
   const years = [...new Set(monthly.map(d => d.YEAR))].sort((a,b) => a-b);
@@ -1125,7 +1125,7 @@ loadData().then(() => {
 });
 
 // Seasonal scatter + histogram (Altair spec)
-fetch("../data/linked_scatter_histogram.json")
+fetch("data/linked_scatter_histogram.json")
   .then(r => {
     console.log("Fetch status:", r.status);
     return r.json();
