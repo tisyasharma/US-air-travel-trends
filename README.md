@@ -15,12 +15,12 @@ Website Link: https://tisyasharma.github.io/US-air-travel-trends/. The steps bel
 - ![Market share](docs/market-share.png) — stacked area chart
 
 ## Project layout
-- `index.html`, `main.js`, `styles.css` — static site.
-- `scripts/build_web_data.py` — data pipeline for JSON feeds.
-- `data/` — JSON outputs and raw/clean CSV inputs (inputs not committed).
-- `data/*.json` — frontend JSON assets (e.g., `linked_scatter_histogram.json` Altair spec).
-- `notebooks/01_data_cleaning.ipynb`, `notebooks/02_analysis.ipynb` — cleaning and analysis notebooks (in order).
-- `docs/` — screenshots/assets.
+- [`index.html`](index.html), [`main.js`](main.js), [`styles.css`](styles.css) — static site.
+- [`scripts/build_web_data.py`](scripts/build_web_data.py) — data pipeline for JSON feeds.
+- [`data/`](data/) — JSON outputs and raw/clean CSV inputs (inputs not committed).
+- [`data/*.json`](data/) — frontend JSON assets (e.g., `linked_scatter_histogram.json` Altair spec).
+- [`notebooks/01_data_cleaning.ipynb`](notebooks/01_data_cleaning.ipynb), [`notebooks/02_analysis.ipynb`](notebooks/02_analysis.ipynb) — cleaning and analysis notebooks (in order).
+- [`docs/`](docs/) — screenshots/assets.
 
 ## Local build (optional)
 1) Install: `pip install -r requirements.txt` (Python 3.9+).  
