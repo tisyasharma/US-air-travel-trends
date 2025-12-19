@@ -41,8 +41,4 @@ Website Link: https://tisyasharma.github.io/US-air-travel-trends/. The steps bel
   python scripts/build_web_data.py
   python -m http.server 8000
   ```
-- Data sources: BTS T-100 Segment data (1999–2024) and an airport lookup with IATA, city, state, country, lat/lon. Keep large raw/clean CSVs out of Git (use LFS if needed).
-
-## Notes
-- Keep large raw/clean CSVs out of Git; only the derived JSON feeds need to be versioned.
-- Refresh screenshots in `docs/` after visual tweaks so the README stays current.
+- Data sources: BTS T-100 Segment data (1999–2024) from [transtats.bts.gov](https://transtats.bts.gov/Fields.asp?gnoyr_VQ=FMG) and an airport lookup with IATA, city, state, country, lat/lon. 
