@@ -32,28 +32,17 @@ Website Link: https://tisyasharma.github.io/US-air-travel-trends/. The steps bel
    python -m http.server 8000
    ```
 
-## Data pipeline
-- Raw T-100 files (1999–2024) → `data/raw_data/`
-- Cleaned flight CSVs → `data/clean_data/`
-- Airport lookup → `data/airports.csv` (required for rebuilds; not included in the repo)
-- `scripts/build_web_data.py` joined airport metadata, trimmed to top routes/carriers, and wrote the JSON feeds.
-- Outputs landed in `data/` for the static site (including non-generated JSON assets in `data/`).
-- If source data changes, rerun the build script and refresh the page.
+## Data & build
+- Inputs live in `data/raw_data/` (T-100 CSVs) and `data/clean_data/` (cleaned flights). `airports.csv` goes in `data/` (fallback: `other_data/airports.csv`).
+- `scripts/build_web_data.py` joins airport metadata, trims to top routes/carriers, and writes the JSON feeds.
+- Outputs land in `data/` for the static site (including non-generated JSON assets in `data/`).
+- Rebuild + preview locally:
+  ```bash
+  python scripts/build_web_data.py
+  python -m http.server 8000
+  ```
+- Data sources: BTS T-100 Segment data (1999–2024) and an airport lookup with IATA, city, state, country, lat/lon. Keep large raw/clean CSVs out of Git (use LFS if needed).
 
-## Data sources & downloads
-- Flight data: BTS T-100 Segment data (domestic + international). Download monthly CSVs, place in `data/raw_data/`, run your cleaning to populate `data/clean_data/`.
-- Airport metadata: `airports.csv` (IATA, city, state, country, lat/lon). Place in `data/airports.csv` (fallback: `other_data/airports.csv`).
-- Keep large raw/clean CSVs out of Git; consider Git LFS if you must share full datasets.
-
-## Methods & sanity checks
-- Build step prints row counts per extract; ensure JSONs exist in `data/`.
-- Spot-checked records in `flow_links.json` and `carriers_by_origin.json` for sensible values (PASSENGERS, lat/lon).
-- Validated code loads: `python -m py_compile scripts/build_web_data.py`.
-- For local dev, rerun the build after updating source CSVs and hard-refresh the browser cache.
-
-## Notes for contributors
+## Notes
 - Keep large raw/clean CSVs out of Git; only the derived JSON feeds need to be versioned.
 - Refresh screenshots in `docs/` after visual tweaks so the README stays current.
-
-## License
-MIT — see `LICENSE`.
