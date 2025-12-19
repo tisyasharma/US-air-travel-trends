@@ -9,11 +9,6 @@ Website Link: https://tisyasharma.github.io/US-air-travel-trends/. The steps bel
 - Built market share and seasonality charts (Vega-Lite) using lightweight JSON extracts.
 - Automated data prep with a single build script that writes the JSON feeds used by the site.
 
-## Screenshots
-- ![Hero](docs/hero.png) — landing section
-- ![Routes map](docs/routes.png) — map with filters visible
-- ![Market share](docs/market-share.png) — stacked area chart
-
 ## Project layout
 - [`index.html`](index.html), [`main.js`](main.js), [`styles.css`](styles.css) — static site.
 - [`scripts/build_web_data.py`](scripts/build_web_data.py) — data pipeline for JSON feeds.
