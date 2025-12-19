@@ -4,6 +4,13 @@ Interactive visuals of U.S. flight trends (1999–2024): route flows, carrier ma
 
 Live demo: replace with your GitHub Pages URL, e.g. `https://<username>.github.io/US-air-travel-trends/`. The steps below are only needed if you want to rebuild data or preview locally.
 
+## Contents
+- [Site](site/index.html) — static page and assets (root index redirects here)
+- [Data pipeline](scripts/build_web_data.py) — generates JSON feeds
+- [Data outputs](data/) — JSONs used by the site (mirrored to `webpage_deliverable/data/`)
+- [Notebooks](notebooks/) — cleaning and analysis
+- [Docs](docs/) — screenshots/assets
+
 ## Highlights
 - Interactive route map (D3 + TopoJSON) with filtering by origin, year, month, and top-N routes.
 - Market share and seasonality charts (Vega-Lite) using lightweight JSON extracts.
@@ -16,11 +23,11 @@ Add your visuals under `docs/` and update the links:
 - ![Market share](docs/market-share.png) — stacked area chart
 
 ## Project layout
-- `index.html`, `main.js`, `styles.css` — static site.
+- `site/index.html`, `site/main.js`, `site/styles.css` — static site (root `index.html` redirects here).
 - `data/` — JSON feeds for the site plus raw/clean CSV inputs (not committed).
 - `webpage_deliverable/data/` — bundled copy of the JSON feeds for submission.
 - `scripts/build_web_data.py` — prepares JSON extracts from cleaned CSVs.
-- `notebooks/analysis.ipynb`, `notebooks/data_cleaning.ipynb` — exploration and cleaning notebooks.
+- `notebooks/01_data_cleaning.ipynb`, `notebooks/02_analysis.ipynb` — cleaning and analysis notebooks (in order).
 - `data/*.json` — frontend JSON assets (e.g., `linked_scatter_histogram.json` Altair spec) mirrored to `webpage_deliverable/data/`.
 
 ## Local build (optional)

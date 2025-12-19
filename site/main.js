@@ -19,6 +19,7 @@ const mapSort = document.getElementById('mapSort');
 const mapTopSlider = document.getElementById('mapTopSlider');
 const mapTopVal = document.getElementById('mapTopVal');
 
+// Shared helpers and state for the map and charts
 const monthNames = [
   '',
   'January',
@@ -93,6 +94,7 @@ const stateAbbrev = {
 // Central UI state for the map filters
 const state = { year: 2025, month: 0, origin: null };
 
+// Loaded datasets and derived lookup maps
 let flowLinks = [];
 let carriers = [];
 let marketShare = [];
@@ -139,6 +141,7 @@ const legendLabel = (name) =>
     .replace(/\s{2,}/g, ' ')
     .trim();
 
+// Shared tooltip used by the D3 map and Vega charts
 const tooltip = d3
   .select('body')
   .append('div')
@@ -146,7 +149,7 @@ const tooltip = d3
   .style('opacity', 0)
   .style('pointer-events', 'none');
 
-// Utils
+// Basic formatters for tooltips and labels
 const fmt = new Intl.NumberFormat('en-US');
 function formatNumber(n) {
   if (n === null || n === undefined || Number.isNaN(n)) return '—';
@@ -170,12 +173,12 @@ function debounce(fn, wait = 150) {
   };
 }
 
-// Load the prepared JSON extracts and coerce fields to numbers
+// Load the prepared JSON extracts from ../data/ and coerce fields to numbers
 async function loadData() {
   const [linksRaw, carrierDataRaw, marketShareRaw] = await Promise.all([
-    fetch('data/flow_links.json').then((r) => r.json()),
-    fetch('data/carriers_by_origin.json').then((r) => r.json()),
-    fetch('data/carrier_market_share.json').then((r) => r.json()),
+    fetch('../data/flow_links.json').then((r) => r.json()),
+    fetch('../data/carriers_by_origin.json').then((r) => r.json()),
+    fetch('../data/carrier_market_share.json').then((r) => r.json()),
   ]);
 
   // Omit incomplete 2025 data
@@ -969,8 +972,8 @@ async function renderSeasonalHeatmap() {
   const width = heatEl.node().clientWidth;
   const height = heatEl.node().clientHeight;
 
-  // Load the monthly totals (precomputed JSON — see preprocessing below)
-  const monthly = await fetch("data/monthly_metrics.json").then(r => r.json());
+  // Load the monthly totals (precomputed JSON; see build script)
+  const monthly = await fetch("../data/monthly_metrics.json").then(r => r.json());
 
   // Extract months 1–12 and all years
   const years = [...new Set(monthly.map(d => d.YEAR))].sort((a,b) => a-b);
@@ -1113,7 +1116,7 @@ async function renderSeasonalHeatmap() {
     .text((y) => eventLookup.get(y));
 }
 
-// Call it after data loads
+// Render all views once data is available
 loadData().then(() => {
   updateFlowMap({ year: state.year, month: state.month, origin: state.origin });
   renderCarrierList({ year: state.year, month: state.month, origin: state.origin });
@@ -1121,8 +1124,8 @@ loadData().then(() => {
   renderSeasonalHeatmap(); 
 });
 
-// Seasonal Scatter + Histogram
-fetch("data/linked_scatter_histogram.json")
+// Seasonal scatter + histogram (Altair spec)
+fetch("../data/linked_scatter_histogram.json")
   .then(r => {
     console.log("Fetch status:", r.status);
     return r.json();
