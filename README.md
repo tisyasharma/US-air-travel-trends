@@ -7,7 +7,7 @@ Live demo: https://tisyasharma.github.io/US-air-travel-trends/. The steps below 
 ## Contents
 - [Site](index.html) — static page and assets
 - [Data pipeline](scripts/build_web_data.py) — generates JSON feeds
-- [Data outputs](data/) — JSONs used by the site (mirrored to `webpage_deliverable/data/`)
+- [Data outputs](data/) — JSONs used by the site
 - [Notebooks](notebooks/) — cleaning and analysis
 - [Docs](docs/) — screenshots/assets
 
@@ -39,7 +39,7 @@ Add your visuals under `docs/` and update the links:
    ```bash
    python scripts/build_web_data.py
    ```
-   Outputs: `data/flow_links.json`, `data/carriers_by_origin.json`, `data/monthly_metrics.json`, `data/carrier_market_share.json` (mirrored to `webpage_deliverable/data/`).
+   Outputs: `data/flow_links.json`, `data/carriers_by_origin.json`, `data/monthly_metrics.json`, `data/carrier_market_share.json`.
 4) View the site locally:
    ```bash
    python -m http.server 8000
@@ -50,7 +50,7 @@ Add your visuals under `docs/` and update the links:
 - Cleaned flight CSVs → `data/clean_data/`
 - Airport lookup → `data/airports.csv` (required for rebuilds; not included in the repo)
 - `scripts/build_web_data.py` joins airport metadata, trims to top routes/carriers, and writes the JSON feeds.
-- Outputs mirrored to `data/` and `webpage_deliverable/data/` for the static site (including non-generated JSON assets in `data/`).
+- Outputs land in `data/` for the static site (including non-generated JSON assets in `data/`).
 - If source data changes, rerun the build script and refresh the page.
 
 ## Data sources & downloads

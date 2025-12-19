@@ -4,7 +4,7 @@ Expected contents for rebuilding the site data:
 - `raw_data/` — source T-100 CSVs (not tracked)
 - `clean_data/` — cleaned flight CSVs (not tracked)
 - `airports.csv` — airport lookup (IATA, name, city, state, country, latitude, longitude)
-- JSON outputs produced by `scripts/build_web_data.py` (tracked):
+- JSON outputs produced by `scripts/build_web_data.py` (tracked, overwritten on rebuild):
   - `flow_links.json`
   - `carriers_by_origin.json`
   - `monthly_metrics.json`

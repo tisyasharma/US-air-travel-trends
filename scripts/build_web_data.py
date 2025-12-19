@@ -9,7 +9,6 @@ Data extracts from the cleaned T-100 files for the map visualization.
 from __future__ import annotations
 
 import calendar
-import shutil
 from pathlib import Path
 from typing import Dict, List
 
@@ -22,7 +21,6 @@ AIRPORTS_CANDIDATES = [
     DATA_DIR / "airports.csv",
     ROOT / "other_data" / "airports.csv",
 ]
-OUT_DIRS = [DATA_DIR, ROOT / "webpage_deliverable" / "data"]
 
 
 def find_airports_path() -> Path:
@@ -43,37 +41,13 @@ def write_json(df: pd.DataFrame, filename: str, date_format: str | None = None) 
     """
     parameters: df (dataframe to write), filename (target name), date_format (optional pandas date_format)
     returns: None
-    function: write JSON outputs to both the main data directory and the webpage deliverable copy
+    function: write JSON outputs to the data directory (overwrite existing files)
     """
-    for out_dir in OUT_DIRS:
-        out_dir.mkdir(parents=True, exist_ok=True)
-        kwargs = {"orient": "records"}
-        if date_format:
-            kwargs["date_format"] = date_format
-        df.to_json(out_dir / filename, **kwargs)
-
-
-def describe_outputs(filename: str) -> str:
-    """
-    parameters: filename (basename of written file)
-    returns: comma-separated string of output targets
-    function: show where the JSON extracts were written
-    """
-    return ", ".join(str(out / filename) for out in OUT_DIRS)
-
-
-def mirror_json_assets() -> None:
-    """
-    parameters: none
-    returns: None
-    function: ensure top-level JSON assets (e.g., chart specs) in data/ are mirrored to the deliverable folder
-    """
-    for src in DATA_DIR.glob("*.json"):
-        for out_dir in OUT_DIRS:
-            if out_dir == DATA_DIR:
-                continue
-            out_dir.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, out_dir / src.name)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    kwargs = {"orient": "records"}
+    if date_format:
+        kwargs["date_format"] = date_format
+    df.to_json(DATA_DIR / filename, **kwargs)
 
 
 def load_airports() -> pd.DataFrame:
@@ -292,13 +266,11 @@ def main():
     write_json(carrier_rankings, "carriers_by_origin.json")
     write_json(monthly, "monthly_metrics.json", date_format="iso")
     write_json(market_share, "carrier_market_share.json", date_format="iso")
-    mirror_json_assets()
 
-    print(f"Wrote {len(routes):,} route links -> {describe_outputs('flow_links.json')}")
-    print(f"Carriers: {len(carrier_rankings):,} rows -> {describe_outputs('carriers_by_origin.json')}")
-    print(f"Monthly metrics: {len(monthly):,} rows -> {describe_outputs('monthly_metrics.json')}")
-    print(f"Market share: {len(market_share):,} rows -> {describe_outputs('carrier_market_share.json')}")
-    print(f"Synced JSON assets from {DATA_DIR} to {', '.join(str(p) for p in OUT_DIRS if p != DATA_DIR)}")
+    print(f"Wrote {len(routes):,} route links -> {DATA_DIR/'flow_links.json'}")
+    print(f"Carriers: {len(carrier_rankings):,} rows -> {DATA_DIR/'carriers_by_origin.json'}")
+    print(f"Monthly metrics: {len(monthly):,} rows -> {DATA_DIR/'monthly_metrics.json'}")
+    print(f"Market share: {len(market_share):,} rows -> {DATA_DIR/'carrier_market_share.json'}")
 
 
 if __name__ == "__main__":
