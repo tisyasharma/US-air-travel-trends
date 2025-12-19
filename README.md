@@ -2,14 +2,7 @@
 
 Built interactive visuals of U.S. flight trends (1999–2024): route flows, carrier market share, and seasonal capacity using cleaned T-100 data.
 
-Live demo: https://tisyasharma.github.io/US-air-travel-trends/. The steps below are only needed if you want to rebuild data or preview locally.
-
-## Contents
-- [Site](index.html) — static page and assets
-- [Data pipeline](scripts/build_web_data.py) — generates JSON feeds
-- [Data outputs](data/) — JSONs used by the site
-- [Notebooks](notebooks/) — cleaning and analysis
-- [Docs](docs/) — screenshots/assets
+Website Link: https://tisyasharma.github.io/US-air-travel-trends/. The steps below are only needed if you want to rebuild data or preview locally.
 
 ## Highlights
 - Built an interactive route map (D3 + TopoJSON) with filtering by origin, year, month, and top-N routes.
@@ -17,17 +10,17 @@ Live demo: https://tisyasharma.github.io/US-air-travel-trends/. The steps below 
 - Automated data prep with a single build script that writes the JSON feeds used by the site.
 
 ## Screenshots
-Add your visuals under `docs/` and update the links:
 - ![Hero](docs/hero.png) — landing section
 - ![Routes map](docs/routes.png) — map with filters visible
 - ![Market share](docs/market-share.png) — stacked area chart
 
 ## Project layout
 - `index.html`, `main.js`, `styles.css` — static site.
-- `data/` — JSON feeds for the site plus raw/clean CSV inputs (not committed).
-- `scripts/build_web_data.py` — prepared JSON extracts from cleaned CSVs.
-- `notebooks/01_data_cleaning.ipynb`, `notebooks/02_analysis.ipynb` — cleaning and analysis notebooks (in order).
+- `scripts/build_web_data.py` — data pipeline for JSON feeds.
+- `data/` — JSON outputs and raw/clean CSV inputs (inputs not committed).
 - `data/*.json` — frontend JSON assets (e.g., `linked_scatter_histogram.json` Altair spec).
+- `notebooks/01_data_cleaning.ipynb`, `notebooks/02_analysis.ipynb` — cleaning and analysis notebooks (in order).
+- `docs/` — screenshots/assets.
 
 ## Local build (optional)
 1) Install: `pip install -r requirements.txt` (Python 3.9+).  
