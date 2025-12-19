@@ -1,6 +1,6 @@
 # Passenger Travel Analysis
 
-Interactive visuals of U.S. flight trends (1999–2024): route flows, carrier market share, and seasonal capacity using cleaned T-100 data.
+Built interactive visuals of U.S. flight trends (1999–2024): route flows, carrier market share, and seasonal capacity using cleaned T-100 data.
 
 Live demo: https://tisyasharma.github.io/US-air-travel-trends/. The steps below are only needed if you want to rebuild data or preview locally.
 
@@ -12,9 +12,9 @@ Live demo: https://tisyasharma.github.io/US-air-travel-trends/. The steps below 
 - [Docs](docs/) — screenshots/assets
 
 ## Highlights
-- Interactive route map (D3 + TopoJSON) with filtering by origin, year, month, and top-N routes.
-- Market share and seasonality charts (Vega-Lite) using lightweight JSON extracts.
-- One-step data build script that mirrors outputs to both `data/` and `webpage_deliverable/data/` for the static site.
+- Built an interactive route map (D3 + TopoJSON) with filtering by origin, year, month, and top-N routes.
+- Built market share and seasonality charts (Vega-Lite) using lightweight JSON extracts.
+- Automated data prep with a single build script that writes the JSON feeds used by the site.
 
 ## Screenshots
 Add your visuals under `docs/` and update the links:
@@ -25,10 +25,9 @@ Add your visuals under `docs/` and update the links:
 ## Project layout
 - `index.html`, `main.js`, `styles.css` — static site.
 - `data/` — JSON feeds for the site plus raw/clean CSV inputs (not committed).
-- `webpage_deliverable/data/` — bundled copy of the JSON feeds for submission.
-- `scripts/build_web_data.py` — prepares JSON extracts from cleaned CSVs.
+- `scripts/build_web_data.py` — prepared JSON extracts from cleaned CSVs.
 - `notebooks/01_data_cleaning.ipynb`, `notebooks/02_analysis.ipynb` — cleaning and analysis notebooks (in order).
-- `data/*.json` — frontend JSON assets (e.g., `linked_scatter_histogram.json` Altair spec) mirrored to `webpage_deliverable/data/`.
+- `data/*.json` — frontend JSON assets (e.g., `linked_scatter_histogram.json` Altair spec).
 
 ## Local build (optional)
 1) Install: `pip install -r requirements.txt` (Python 3.9+).  
@@ -49,8 +48,8 @@ Add your visuals under `docs/` and update the links:
 - Raw T-100 files (1999–2024) → `data/raw_data/`
 - Cleaned flight CSVs → `data/clean_data/`
 - Airport lookup → `data/airports.csv` (required for rebuilds; not included in the repo)
-- `scripts/build_web_data.py` joins airport metadata, trims to top routes/carriers, and writes the JSON feeds.
-- Outputs land in `data/` for the static site (including non-generated JSON assets in `data/`).
+- `scripts/build_web_data.py` joined airport metadata, trimmed to top routes/carriers, and wrote the JSON feeds.
+- Outputs landed in `data/` for the static site (including non-generated JSON assets in `data/`).
 - If source data changes, rerun the build script and refresh the page.
 
 ## Data sources & downloads
@@ -59,9 +58,9 @@ Add your visuals under `docs/` and update the links:
 - Keep large raw/clean CSVs out of Git; consider Git LFS if you must share full datasets.
 
 ## Methods & sanity checks
-- Build step prints row counts per extract; ensure JSONs exist in both `data/` and `webpage_deliverable/data/`.
-- Spot-check a few records in `flow_links.json` and `carriers_by_origin.json` for sensible values (PASSENGERS, lat/lon).
-- Validate code loads: `python -m py_compile scripts/build_web_data.py`.
+- Build step prints row counts per extract; ensure JSONs exist in `data/`.
+- Spot-checked records in `flow_links.json` and `carriers_by_origin.json` for sensible values (PASSENGERS, lat/lon).
+- Validated code loads: `python -m py_compile scripts/build_web_data.py`.
 - For local dev, rerun the build after updating source CSVs and hard-refresh the browser cache.
 
 ## Notes for contributors
