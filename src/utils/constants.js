@@ -84,8 +84,8 @@ export const CARRIER_ALIASES = {
 // Resolve CSS custom properties so colors can be in sync with styles.css
 export const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-// Map color palette (theme-aware from CSS variables)
-export const MAP_COLORS = {
+// Map color palette (resolve at render time so dev/prod stay in sync)
+export const getMapColors = () => ({
   land: cssVar('--land') || '#E3ECF6',
   border: cssVar('--border-strong') || '#C2D1E5',
   state: cssVar('--border-strong') || '#C2D1E5',
@@ -93,7 +93,7 @@ export const MAP_COLORS = {
   node: cssVar('--accent2') || '#5471a9',
   route: cssVar('--route') || '#4B6EDC',
   highlight: cssVar('--accent1') || '#F97316',
-};
+});
 
 // Colorblind-friendly palette with 22 distinct colors (cool/neutral, on-theme)
 export const MARKET_COLORS = [

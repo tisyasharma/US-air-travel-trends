@@ -4,8 +4,8 @@
  */
 
 import * as d3 from 'd3';
-import { dataCache } from '../hooks/useData.js';
-import { formatNumber } from '../utils/helpers.js';
+import { dataCache, originMeta } from '../hooks/useData.js';
+import { formatAirportLabel, formatNumber } from '../utils/helpers.js';
 
 /**
  * Render the carrier leaderboard for the selected origin
@@ -18,6 +18,8 @@ export function renderCarrierList({ year, month, origin }) {
   const container = document.getElementById('carrierList');
   if (!container) return;
 
+  const meta = originMeta.get(origin) || {};
+  const originLabel = formatAirportLabel(origin, meta.city, meta.state);
   let data = dataCache.carriers.filter((d) => d.ORIGIN === origin);
 
   if (year > 0) {
@@ -49,13 +51,13 @@ export function renderCarrierList({ year, month, origin }) {
     .slice(0, 12);
 
   if (!data.length) {
-    container.innerHTML = '<h4>Carriers Serving Origin</h4><p class="muted">No carrier records.</p>';
+    container.innerHTML = `<h4>Carriers Serving ${originLabel || origin}</h4><p class="muted">No carrier records.</p>`;
     return;
   }
 
   const maxPax = d3.max(data, (d) => d.passengers) || 1;
   container.innerHTML =
-    `<h4>Carriers Serving ${origin}</h4>` +
+    `<h4>Carriers Serving ${originLabel || origin}</h4>` +
     data
       .map(
         (d) => `

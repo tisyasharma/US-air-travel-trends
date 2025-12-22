@@ -42,6 +42,19 @@ export function formatPct(v) {
 }
 
 /**
+ * Format an airport code with a city/state label when available
+ * @param {string} code - Airport IATA code
+ * @param {string} city - City name
+ * @param {string} state - State/region abbreviation
+ * @returns {string} Formatted airport label
+ */
+export function formatAirportLabel(code, city, state) {
+  if (!code) return '';
+  const place = city ? (state ? `${city}, ${state}` : city) : '';
+  return place ? `${code} (${place})` : code;
+}
+
+/**
  * Convert month number to display label
  * @param {number} m - Month number (0 for all months, 1-12 for specific months)
  * @returns {string} Month label

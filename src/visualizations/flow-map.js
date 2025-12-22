@@ -4,9 +4,9 @@
  */
 
 import * as d3 from 'd3';
-import { dataCache, mapFilters } from '../hooks/useData.js';
-import { formatNumber, monthLabel, yearLabel, greatCircleCoords } from '../utils/helpers.js';
-import { MAP_COLORS, STATE_ABBREV } from '../utils/constants.js';
+import { dataCache, mapFilters, originMeta } from '../hooks/useData.js';
+import { formatNumber, monthLabel, yearLabel, greatCircleCoords, formatAirportLabel } from '../utils/helpers.js';
+import { getMapColors, STATE_ABBREV } from '../utils/constants.js';
 import { showTooltip, hideTooltip } from './tooltip.js';
 
 /**
@@ -75,6 +75,7 @@ export function aggregateAcrossYears(links, month) {
 export async function updateFlowMap({ year, month, origin }) {
   const el = d3.select('#flowMapCanvas');
   el.selectAll('svg').remove();
+  const mapColors = getMapColors();
 
   let links = dataCache.flowLinks.filter((d) => d.ORIGIN === origin);
   if (year > 0) links = links.filter((d) => d.YEAR === year);
@@ -90,14 +91,16 @@ export async function updateFlowMap({ year, month, origin }) {
   links = links.sort((a, b) => b[sortKey] - a[sortKey]);
 
   const mapTopSlider = document.getElementById('mapTopSlider');
-  const mapTopVal = document.getElementById('mapTopVal');
+  const mapTopCurrent = document.getElementById('mapTopCurrent');
+  const mapTopMax = document.getElementById('mapTopMax');
   if (mapTopSlider) {
     mapTopSlider.max = Math.max(1, links.length);
     if (mapFilters.top > links.length) {
       mapFilters.top = links.length || 1;
     }
     mapTopSlider.value = mapFilters.top;
-    if (mapTopVal) mapTopVal.textContent = mapFilters.top;
+    if (mapTopMax) mapTopMax.textContent = mapTopSlider.max;
+    updateRangeMarker(mapTopSlider, mapTopCurrent);
   }
   links = links.slice(0, mapFilters.top || 15);
 
@@ -185,8 +188,8 @@ export async function updateFlowMap({ year, month, origin }) {
     .data(land.features)
     .join('path')
     .attr('d', path)
-    .attr('fill', MAP_COLORS.land)
-    .attr('stroke', MAP_COLORS.border)
+    .attr('fill', mapColors.land)
+    .attr('stroke', mapColors.border)
     .attr('stroke-width', 1);
 
   if (dataCache.statesMesh) {
@@ -196,7 +199,7 @@ export async function updateFlowMap({ year, month, origin }) {
       .datum(dataCache.statesMesh)
       .attr('d', path)
       .attr('fill', 'none')
-      .attr('stroke', MAP_COLORS.state)
+      .attr('stroke', mapColors.state)
       .attr('stroke-width', 0.6)
       .attr('stroke-opacity', 0.6);
 
@@ -257,7 +260,7 @@ export async function updateFlowMap({ year, month, origin }) {
     .data(links)
     .join('path')
     .attr('fill', 'none')
-    .attr('stroke', (_, i) => (i < highlightCut ? MAP_COLORS.highlight : MAP_COLORS.route))
+    .attr('stroke', (_, i) => (i < highlightCut ? mapColors.highlight : mapColors.route))
     .attr('stroke-width', (d, i) => widthScale(d.PASSENGERS) * (i < highlightCut ? 1.15 : 1))
     .attr('stroke-linecap', 'round')
     .attr('stroke-opacity', 0.75)
@@ -285,7 +288,7 @@ export async function updateFlowMap({ year, month, origin }) {
     gZoom
       .append('circle')
       .attr('r', 5)
-      .attr('fill', MAP_COLORS.hub)
+      .attr('fill', mapColors.hub)
       .attr('stroke', '#fff')
       .attr('stroke-width', 1.5)
       .attr('transform', `translate(${originCoords})`);
@@ -298,7 +301,7 @@ export async function updateFlowMap({ year, month, origin }) {
     .data(links)
     .join('circle')
     .attr('r', 3)
-    .attr('fill', MAP_COLORS.node)
+    .attr('fill', mapColors.node)
     .attr('stroke', '#fff')
     .attr('stroke-width', 0.7)
     .attr('transform', (d) => {
@@ -352,6 +355,22 @@ function showRouteTooltip(event, d) {
   showTooltip(event, html);
 }
 
+function updateRangeMarker(slider, marker) {
+  if (!slider || !marker) return;
+  const min = Number(slider.min || 0);
+  const max = Number(slider.max || 1);
+  const val = Number(slider.value || 0);
+  const ratio = max > min ? (val - min) / (max - min) : 0;
+  marker.textContent = val;
+  requestAnimationFrame(() => {
+    const sliderWidth = slider.getBoundingClientRect().width || 1;
+    const markerWidth = marker.offsetWidth || 0;
+    const rawLeft = ratio * sliderWidth;
+    const clampedLeft = Math.min(sliderWidth - markerWidth / 2, Math.max(markerWidth / 2, rawLeft));
+    marker.style.left = `${clampedLeft}px`;
+  });
+}
+
 /**
  * Update the summary card beneath the map
  * @param {Array} links - Filtered route links
@@ -361,18 +380,27 @@ export function renderMapSummary(links, { year, month, origin }) {
   const summaryEl = document.getElementById('mapSummary');
   if (!summaryEl) return;
 
+  const meta = originMeta.get(origin) || {};
+  const sample = links[0] || {};
+  const originLabel = formatAirportLabel(
+    origin,
+    sample.o_city || meta.city,
+    sample.o_state || meta.state
+  );
+
   if (!links.length) {
-    summaryEl.innerHTML = '<h4>Selection</h4><p class="muted">No routes found.</p>';
+    summaryEl.innerHTML = `<h4>${originLabel || 'Selection'}</h4><p class="muted">No routes found.</p>`;
     return;
   }
   const totalPassengers = d3.sum(links, (d) => d.PASSENGERS);
   const top = links[0];
+  const topLabel = formatAirportLabel(top.DEST, top.d_city, top.d_state);
   const list = links
     .slice(0, 15)
     .map(
       (d) => `
         <div class="summary-row">
-          <span class="summary-dest">${d.d_city || d.DEST} (${d.DEST})</span>
+          <span class="summary-dest">${formatAirportLabel(d.DEST, d.d_city, d.d_state)}</span>
           <span class="summary-pass">${formatNumber(d.PASSENGERS)} passengers</span>
           <span class="summary-dot">·</span>
           <span class="summary-flights">${formatNumber(d.DEPARTURES)} flights</span>
@@ -380,9 +408,9 @@ export function renderMapSummary(links, { year, month, origin }) {
     )
     .join('');
   summaryEl.innerHTML = `
-    <h4>${origin} — ${monthLabel(month)} ${yearLabel(year)}</h4>
+    <h4>${originLabel} — ${monthLabel(month)} ${yearLabel(year)}</h4>
     <p><strong>${formatNumber(totalPassengers)}</strong> passengers across ${links.length} routes.</p>
-    <p class="muted">Top destination: ${top.DEST} (${formatNumber(top.PASSENGERS)} pax)</p>
+    <p class="muted">Top destination: ${topLabel} (${formatNumber(top.PASSENGERS)} pax)</p>
     <div class="summary-list" style="margin-top:8px">${list}</div>
   `;
 }

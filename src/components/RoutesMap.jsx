@@ -108,8 +108,6 @@ function RoutesMap() {
 
   const handleTopChange = (e) => {
     mapFilters.top = +e.target.value
-    const valEl = document.getElementById('mapTopVal')
-    if (valEl) valEl.textContent = mapFilters.top
     if (state.origin) {
       updateFlowMap(state)
     }
@@ -214,18 +212,21 @@ function RoutesMap() {
                 </label>
                 <label>
                   Top destinations
-                  <input
-                    type="range"
-                    id="mapTopSlider"
-                    min="1"
-                    max="25"
-                    step="1"
-                    defaultValue="15"
-                    onChange={handleTopChange}
-                  />
+                  <div className="range-wrap">
+                    <output id="mapTopCurrent" className="range-marker">{mapFilters.top}</output>
+                    <input
+                      type="range"
+                      id="mapTopSlider"
+                      min="1"
+                      max="25"
+                      step="1"
+                      defaultValue="15"
+                      onChange={handleTopChange}
+                    />
+                  </div>
                   <div className="range-meta">
                     <span>1</span>
-                    <span id="mapTopVal">{mapFilters.top}</span>
+                    <span id="mapTopMax">25</span>
                   </div>
                 </label>
                 <div className="map-zoom">

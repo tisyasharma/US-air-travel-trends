@@ -625,6 +625,22 @@ label {
   font-weight: 500;
 }
 
+.range-wrap {
+  position: relative;
+  padding-top: 16px;
+}
+
+.range-marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-weight: 600;
+  color: var(--text-primary);
+  pointer-events: none;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ===========================
    Map Summary Panels
    =========================== */

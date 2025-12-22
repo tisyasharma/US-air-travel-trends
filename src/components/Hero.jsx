@@ -3,7 +3,7 @@ function Hero() {
     <header id="top" className="hero">
       <div className="container">
         <p className="kicker" data-aos="fade-up">
-          DS4200 Final Project - Tisya Sharma, Tim Matten
+          DS4200 Final Project - Tisya Sharma
         </p>
         <h1 data-aos="fade-up">
           Major Flight Trends Over the Past 25 Years
