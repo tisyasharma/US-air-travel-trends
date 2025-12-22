@@ -1,5 +1,9 @@
 .DS_Store
 
+# Local tooling/deps
+node_modules/
+.claude/
+
 # Keep bulky source data out of Git (JSON outputs are still tracked)
 data/raw_data/
 data/clean_data/

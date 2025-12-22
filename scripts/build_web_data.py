@@ -16,6 +16,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "data"
+WEB_DATA_DIR = ROOT / "public" / "data"
 CLEAN_DIR = DATA_DIR / "clean_data"
 AIRPORTS_CANDIDATES = [
     DATA_DIR / "airports.csv",
@@ -41,13 +42,13 @@ def write_json(df: pd.DataFrame, filename: str, date_format: str | None = None) 
     """
     parameters: df (dataframe to write), filename (target name), date_format (optional pandas date_format)
     returns: None
-    function: write JSON outputs to the data directory (overwrite existing files)
+    function: write JSON outputs to public/data for the web app (overwrite existing files)
     """
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    WEB_DATA_DIR.mkdir(parents=True, exist_ok=True)
     kwargs = {"orient": "records"}
     if date_format:
         kwargs["date_format"] = date_format
-    df.to_json(DATA_DIR / filename, **kwargs)
+    df.to_json(WEB_DATA_DIR / filename, **kwargs)
 
 
 def load_airports() -> pd.DataFrame:
