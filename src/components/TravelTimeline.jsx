@@ -1,10 +1,48 @@
+import { useEffect } from 'react'
+import { renderTravelTimeline } from '../visualizations/travel-timeline.js'
+import { debounce } from '../utils/helpers.js'
+
 function TravelTimeline() {
-  const handleDownload = () => {
-    // Simple image download
-    const link = document.createElement('a')
-    link.href = '/annotated_timeline.png'
-    link.download = 'timeline-img.png'
-    link.click()
+  useEffect(() => {
+    renderTravelTimeline()
+
+    const handleResize = debounce(() => {
+      renderTravelTimeline()
+    }, 250)
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const handleSavePNG = () => {
+    const container = document.getElementById('timelineChart')
+    if (!container) return
+
+    const svg = container.querySelector('svg')
+    if (!svg) return
+
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+
+    canvas.width = svg.clientWidth || 960
+    canvas.height = svg.clientHeight || 500
+
+    // White background
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0)
+      const pngFile = canvas.toDataURL('image/png')
+      const downloadLink = document.createElement('a')
+      downloadLink.download = 'travel-timeline.png'
+      downloadLink.href = pngFile
+      downloadLink.click()
+    }
+
+    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)))
   }
 
   return (
@@ -21,20 +59,13 @@ function TravelTimeline() {
               </p>
             </div>
             <div className="map-controls">
-              <button className="btn btn--ghost" onClick={handleDownload}>
+              <button className="btn btn--ghost" onClick={handleSavePNG}>
                 Save PNG
               </button>
             </div>
           </div>
 
-          <div className="viz-card" data-aos="fade-up">
-            <img
-              id="timeline-img"
-              src="/annotated_timeline.png"
-              alt="Annotated Travel Volume Timeline"
-              className="timeline-img"
-            />
-          </div>
+          <div id="timelineChart" className="viz-card"></div>
 
           <p className="caption">
             Major historical events—such as 9/11, the Great Recession, industry mergers, and the onset of COVID-19—correspond strongly to spikes and drops in national passenger volume.

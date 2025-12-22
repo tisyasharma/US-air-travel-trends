@@ -962,32 +962,55 @@ label {
 }
 
 /* ===========================
-   References
+   Notes
    =========================== */
 
-.reference-list {
+.notes {
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.notes h3 {
+  color: var(--text-primary);
+}
+
+.notes-list {
   margin-top: var(--space-lg);
   padding-left: var(--space-lg);
-  font-size: 15px;
   line-height: 1.7;
+  list-style-type: decimal;
 }
 
-.reference-list li {
+.notes-list li {
   margin-bottom: var(--space-md);
-  color: var(--text-secondary);
+  color: var(--text-muted);
 }
 
-.reference-list a {
-  color: var(--text-primary);
+.notes-list a {
+  color: var(--text-secondary);
   text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
   border-bottom: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.reference-list a:hover {
+.notes-list a:hover {
+  color: var(--text-primary);
+  border-bottom-color: var(--gray-400);
+}
+
+.note-ref {
+  margin-left: 2px;
+  font-size: 0.75em;
+}
+
+.note-ref a {
   color: var(--text-secondary);
-  border-bottom-color: var(--gray-500);
+  text-decoration: none;
+}
+
+.note-ref a:hover {
+  color: var(--text-primary);
 }
 
 /* ===========================

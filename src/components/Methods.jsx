@@ -1,25 +1,33 @@
 function Methods() {
   return (
     <section id="methods" className="section section--alt">
-      <div className="container grid-two" data-aos="fade-up">
-        <div>
-          <p className="kicker">Methods</p>
-          <h4>Preprocessing</h4>
-          <ul className="list">
-            <li>Cleaned BTS T-100 segment data (1999–2024) and standardized airport codes.</li>
-            <li>Aggregated routes by year/month with passengers, flights, seats, and load factor.</li>
-            <li>Compiled carrier totals per origin and domestic market-share summaries.</li>
-          </ul>
-        </div>
-        <div>
-          <h4>Sources & Credits</h4>
-          <ul className="list">
-            <li>U.S. Bureau of Transportation Statistics (BTS) T-100</li>
-            <li>Map & custom visuals: D3.js + TopoJSON (basemap) + custom CSS.</li>
-            <li>Charts: Altair/Vega‑Lite (via vega-embed) for stacked areas, heatmaps, scatterplots.</li>
-            <li>Data preparation libraries: Python, Pandas, and custom scripts to build web-ready JSON extracts.</li>
-            <li>Design: Custom CSS.</li>
-          </ul>
+      <div className="container" data-aos="fade-up">
+        <p className="kicker">Methods</p>
+        <div className="grid-two">
+          <div>
+            <h3>Data & Methodology</h3>
+            <p>
+              This analysis uses the BTS T-100 Domestic Segment Database from the U.S. Bureau of Transportation
+              Statistics, covering 1999-2024.
+              <sup className="note-ref">
+                <a href="#note-3">[3]</a>
+              </sup>{' '}
+              Data was cleaned to standardize airport codes, aggregated by year and month, and used to compute load
+              factors (passengers divided by seats). Carrier totals were rolled up each month to estimate domestic market
+              share. Background context on national air travel trends draws on prior analyses and ACRP summaries.
+              <sup className="note-ref">
+                [<a href="#note-1">1</a>, <a href="#note-2">2</a>]
+              </sup>
+            </p>
+          </div>
+          <div>
+            <h3>Development</h3>
+            <p>
+              The site is built in React with Vite. D3.js and TopoJSON power the route map and custom charts, while
+              Vega-Lite drives the capacity scatter + histogram. Data processing and exports to web-ready JSON were
+              handled in Python using Pandas and custom scripts.
+            </p>
+          </div>
         </div>
       </div>
     </section>

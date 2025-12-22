@@ -206,7 +206,13 @@ export async function updateFlowMap({ year, month, origin }) {
         .selectAll('text')
         .data(dataCache.statesGeo.features)
         .join('text')
-        .attr('transform', (d) => `translate(${path.centroid(d)})`)
+        .attr('transform', (d) => {
+          const centroid = path.centroid(d);
+          if (!centroid || !Number.isFinite(centroid[0]) || !Number.isFinite(centroid[1])) {
+            return 'translate(0,0)';
+          }
+          return `translate(${centroid})`;
+        })
         .attr('dy', '0.35em')
         .attr('text-anchor', 'middle')
         .attr('font-size', (d) => {
@@ -274,13 +280,16 @@ export async function updateFlowMap({ year, month, origin }) {
 
   // Origin point
   const originPoint = { type: 'Point', coordinates: [links[0].o_longitude, links[0].o_latitude] };
-  gZoom
-    .append('circle')
-    .attr('r', 5)
-    .attr('fill', MAP_COLORS.hub)
-    .attr('stroke', '#fff')
-    .attr('stroke-width', 1.5)
-    .attr('transform', `translate(${projection(originPoint.coordinates)})`);
+  const originCoords = projection(originPoint.coordinates);
+  if (originCoords && Number.isFinite(originCoords[0]) && Number.isFinite(originCoords[1])) {
+    gZoom
+      .append('circle')
+      .attr('r', 5)
+      .attr('fill', MAP_COLORS.hub)
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 1.5)
+      .attr('transform', `translate(${originCoords})`);
+  }
 
   // Destination points
   gZoom
@@ -292,7 +301,13 @@ export async function updateFlowMap({ year, month, origin }) {
     .attr('fill', MAP_COLORS.node)
     .attr('stroke', '#fff')
     .attr('stroke-width', 0.7)
-    .attr('transform', (d) => `translate(${projection([d.d_longitude, d.d_latitude])})`)
+    .attr('transform', (d) => {
+      const coords = projection([d.d_longitude, d.d_latitude]);
+      if (!coords || !Number.isFinite(coords[0]) || !Number.isFinite(coords[1])) {
+        return 'translate(-9999,-9999)';
+      }
+      return `translate(${coords})`;
+    })
     .style('cursor', 'pointer');
 
   // Larger invisible targets for dots
@@ -304,7 +319,13 @@ export async function updateFlowMap({ year, month, origin }) {
     .attr('class', 'hit')
     .attr('r', 9)
     .attr('fill', 'transparent')
-    .attr('transform', (d) => `translate(${projection([d.d_longitude, d.d_latitude])})`)
+    .attr('transform', (d) => {
+      const coords = projection([d.d_longitude, d.d_latitude]);
+      if (!coords || !Number.isFinite(coords[0]) || !Number.isFinite(coords[1])) {
+        return 'translate(-9999,-9999)';
+      }
+      return `translate(${coords})`;
+    })
     .style('cursor', 'pointer')
     .on('mouseenter', (event, d) => showRouteTooltip(event, d))
     .on('mousemove', (event, d) => showRouteTooltip(event, d))

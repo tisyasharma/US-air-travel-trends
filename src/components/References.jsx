@@ -1,31 +1,36 @@
 function References() {
   return (
-    <section id="references" className="section">
+    <section id="notes" className="section section--alt notes">
       <div className="container" data-aos="fade-up">
         <p className="kicker">References</p>
-        <h3>Sources and Further Reading</h3>
+        <h3>Sources</h3>
 
-        <ul className="reference-list">
-          <li>
-            <a
-              href="https://www.researchgate.net/publication/238753728_An_Analysis_of_Air_Travel_Trends_in_the_United_States"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              An Analysis of Air Travel Trends in the United States — ResearchGate
+        <ol className="notes-list">
+          <li id="note-1">
+            Adie Tomer and Robert Puentes, "Expect Delays: An Analysis of Air Travel Trends in the United States"
+            (Washington, DC: The Brookings Institution, 2009),{' '}
+            <a href="https://www.brookings.edu/research/expect-delays/" target="_blank" rel="noopener noreferrer">
+              https://www.brookings.edu/research/expect-delays/
             </a>
+            .
           </li>
-
-          <li>
-            <a
-              href="https://crp.trb.org/acrpwebresource12/understanding-air-service-and-regional-economic-activity/how-has-air-service-changed-over-time/#:~:text=were%20two%20notable%20decreases%3A%20the,surpass%202007%20levels%20until%202015"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              How Air Service Has Changed Over Time — Airport Cooperative Research Program (ACRP)
+          <li id="note-2">
+            Airport Cooperative Research Program, "How Has Air Service Changed over Time?," ACRP WebResource 12
+            (Transportation Research Board, n.d.),{' '}
+            <a href="https://crp.trb.org/acrpwebresource12/" target="_blank" rel="noopener noreferrer">
+              https://crp.trb.org/acrpwebresource12/
             </a>
+            .
           </li>
-        </ul>
+          <li id="note-3">
+            Bureau of Transportation Statistics, "T-100 Domestic Segment (All Carriers)" (U.S. Department of
+            Transportation, n.d.),{' '}
+            <a href="https://transtats.bts.gov/" target="_blank" rel="noopener noreferrer">
+              https://transtats.bts.gov/
+            </a>
+            .
+          </li>
+        </ol>
       </div>
     </section>
   )
