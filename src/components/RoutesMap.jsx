@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import * as d3 from 'd3'
 import { updateFlowMap } from '../visualizations/flow-map'
-import { renderCarrierList } from '../visualizations/carrier-list'
 import { mapFilters, populateOriginSelect, dataCache } from '../hooks/useData'
 import { debounce } from '../utils/helpers'
 
@@ -11,6 +10,7 @@ function RoutesMap() {
     month: 0,
     origin: 'ATL'
   })
+  const [sidebarTab, setSidebarTab] = useState('summary')
 
   useEffect(() => {
     // Populate origin dropdown for current year/month
@@ -34,7 +34,6 @@ function RoutesMap() {
     // Update visualizations when state or filters change
     if (state.origin && dataCache.flowLinks.length > 0) {
       updateFlowMap(state)
-      renderCarrierList(state)
     }
   }, [state.year, state.month, state.origin, mapFilters.sortBy, mapFilters.top])
 
@@ -164,8 +163,10 @@ function RoutesMap() {
               <button className="btn btn--ghost" onClick={handleSavePNG}>Save PNG</button>
             </div>
           </div>
+        </div>
 
-          <div id="flowMap" className="viz-card viz-card--tall" data-aos="fade-up">
+        <div className="full-width-viz" data-aos="fade-up">
+          <div id="flowMap" className="viz-card viz-card--tall viz-card--fullwidth">
             <div className="map-layout">
               <div className="map-filters">
                 <h4>Filters</h4>
@@ -234,21 +235,60 @@ function RoutesMap() {
                   <span className="zoom-label">Zoom <span id="zoomVal">1.0x</span></span>
                 </div>
               </div>
+
               <div className="map-canvas" id="flowMapCanvas"></div>
+
+              <div className="map-sidebar map-sidebar--tabs">
+                <div className="map-sidebar__tabs" role="tablist" aria-label="Map details">
+                  <button
+                    type="button"
+                    id="tab-summary"
+                    role="tab"
+                    className={`map-tab ${sidebarTab === 'summary' ? 'is-active' : ''}`}
+                    aria-selected={sidebarTab === 'summary'}
+                    aria-controls="mapSummary"
+                    onClick={() => setSidebarTab('summary')}
+                  >
+                    Top Destinations
+                  </button>
+                  <button
+                    type="button"
+                    id="tab-carriers"
+                    role="tab"
+                    className={`map-tab ${sidebarTab === 'carriers' ? 'is-active' : ''}`}
+                    aria-selected={sidebarTab === 'carriers'}
+                    aria-controls="carrierList"
+                    onClick={() => setSidebarTab('carriers')}
+                  >
+                    Carriers
+                  </button>
+                </div>
+                <div className="map-sidebar__panel">
+                  <div
+                    className={`map-sidebar__section ${sidebarTab === 'summary' ? 'is-active' : ''}`}
+                    id="mapSummary"
+                    role="tabpanel"
+                    aria-labelledby="tab-summary"
+                  >
+                    <h4>Selection Summary</h4>
+                    <p className="muted">Totals will appear here after data loads.</p>
+                  </div>
+                  <div
+                    className={`map-sidebar__section ${sidebarTab === 'carriers' ? 'is-active' : ''}`}
+                    id="carrierList"
+                    role="tabpanel"
+                    aria-labelledby="tab-carriers"
+                  >
+                    <h4>Carriers</h4>
+                    <p className="muted">Carrier market share at selected origin.</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="map-panels" data-aos="fade-up">
-            <div className="card" id="mapSummary">
-              <h4>Selection</h4>
-              <p className="muted">Totals will appear here after data loads.</p>
-            </div>
-            <div className="card" id="carrierList">
-              <h4>Carriers Serving Origin</h4>
-              <p className="muted">Top carriers by passengers for this origin.</p>
-            </div>
-          </div>
-
+        <div className="container">
           <p className="caption">
             Figure 1. Top destinations for the selected month (summed if "All months").
           </p>

@@ -5,9 +5,10 @@
 
 import * as d3 from 'd3';
 import { dataCache, mapFilters, originMeta } from '../hooks/useData.js';
-import { formatNumber, monthLabel, yearLabel, greatCircleCoords, formatAirportLabel } from '../utils/helpers.js';
+import { formatNumber, monthLabel, yearLabel, formatAirportLabel } from '../utils/helpers.js';
 import { getMapColors, STATE_ABBREV } from '../utils/constants.js';
 import { showTooltip, hideTooltip } from './tooltip.js';
+import { renderCarrierList } from './carrier-list.js';
 
 /**
  * Sum across months when "All months" is selected
@@ -254,17 +255,54 @@ export async function updateFlowMap({ year, month, origin }) {
   const widthScale = d3.scaleSqrt().domain(paxExtent).range([0.6, 4]);
   const highlightCut = Math.min(links.length, Math.max(3, Math.round(links.length * 0.2)));
 
+  /**
+   * Create a curved arc path between two points
+   * All arcs curve upward (negative Y direction) for a bloom/fountain effect
+   * @param {Object} d - Route data with coordinates
+   * @returns {string} SVG path string for curved arc
+   */
+  const curvedArc = (d) => {
+    const start = projection([d.o_longitude, d.o_latitude]);
+    const end = projection([d.d_longitude, d.d_latitude]);
+
+    if (!start || !end || !Number.isFinite(start[0]) || !Number.isFinite(end[0])) {
+      return '';
+    }
+
+    // Calculate distance for arc height
+    const dx = end[0] - start[0];
+    const dy = end[1] - start[1];
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Subtle arc height (reduced from 0.2 to 0.15 for more gentle curve)
+    const arcHeight = distance * 0.15;
+
+    // Midpoint between start and end
+    const midX = (start[0] + end[0]) / 2;
+    const midY = (start[1] + end[1]) / 2;
+
+    // Always offset upward (negative Y direction) for consistent bloom effect
+    const controlX = midX;
+    const controlY = midY - arcHeight;
+
+    // Create quadratic bezier curve
+    return `M ${start[0]},${start[1]} Q ${controlX},${controlY} ${end[0]},${end[1]}`;
+  };
+
   const arcs = gZoom
     .append('g')
     .selectAll('path')
     .data(links)
     .join('path')
+    .attr('class', 'route-arc')
+    .attr('data-dest', (d) => d.DEST)
+    .attr('data-carrier', (d) => d.UNIQUE_CARRIER_NAME)
     .attr('fill', 'none')
     .attr('stroke', (_, i) => (i < highlightCut ? mapColors.highlight : mapColors.route))
     .attr('stroke-width', (d, i) => widthScale(d.PASSENGERS) * (i < highlightCut ? 1.15 : 1))
     .attr('stroke-linecap', 'round')
     .attr('stroke-opacity', 0.75)
-    .attr('d', (d) => path({ type: 'LineString', coordinates: greatCircleCoords(d) }));
+    .attr('d', curvedArc);
 
   // Transparent hit layer for easier hover
   gZoom
@@ -275,7 +313,7 @@ export async function updateFlowMap({ year, month, origin }) {
     .attr('fill', 'none')
     .attr('stroke', 'transparent')
     .attr('stroke-width', 10)
-    .attr('d', (d) => path({ type: 'LineString', coordinates: greatCircleCoords(d) }))
+    .attr('d', curvedArc)
     .style('cursor', 'pointer')
     .on('mouseenter', (event, d) => showRouteTooltip(event, d))
     .on('mousemove', (event, d) => showRouteTooltip(event, d))
@@ -291,7 +329,14 @@ export async function updateFlowMap({ year, month, origin }) {
       .attr('fill', mapColors.hub)
       .attr('stroke', '#fff')
       .attr('stroke-width', 1.5)
-      .attr('transform', `translate(${originCoords})`);
+      .attr('transform', `translate(${originCoords})`)
+      .style('cursor', 'pointer')
+      .on('mouseenter', () => {
+        setRouteEmphasis(origin);
+      })
+      .on('mouseleave', () => {
+        resetRouteEmphasis();
+      });
   }
 
   // Destination points
@@ -330,10 +375,22 @@ export async function updateFlowMap({ year, month, origin }) {
       return `translate(${coords})`;
     })
     .style('cursor', 'pointer')
-    .on('mouseenter', (event, d) => showRouteTooltip(event, d))
+    .on('mouseenter', (event, d) => {
+      showRouteTooltip(event, d);
+      setRouteEmphasis(d.DEST);
+      // Show carriers for the destination airport
+      renderCarrierList({ year, month, origin: d.DEST });
+    })
     .on('mousemove', (event, d) => showRouteTooltip(event, d))
-    .on('mouseleave', hideTooltip);
+    .on('mouseleave', () => {
+      hideTooltip();
+      resetRouteEmphasis();
+      // Restore carriers for the origin airport
+      renderCarrierList({ year, month, origin });
+    });
 
+  // Initial render of carrier list for origin
+  renderCarrierList({ year, month, origin });
   renderMapSummary(links, { year, month, origin });
 }
 
@@ -353,6 +410,23 @@ function showRouteTooltip(event, d) {
     <div>${monthLabel(d.MONTH)} ${d.YEAR}</div>
   `;
   showTooltip(event, html);
+}
+
+function setRouteEmphasis(airport) {
+  d3.selectAll('#flowMapCanvas .route-arc')
+    .transition()
+    .duration(300)
+    .attr('stroke-opacity', (d) => {
+      const isConnected = d.DEST === airport || d.ORIGIN === airport;
+      return isConnected ? 0.9 : 0.15;
+    });
+}
+
+function resetRouteEmphasis() {
+  d3.selectAll('#flowMapCanvas .route-arc')
+    .transition()
+    .duration(300)
+    .attr('stroke-opacity', 0.75);
 }
 
 function updateRangeMarker(slider, marker) {
@@ -392,25 +466,28 @@ export function renderMapSummary(links, { year, month, origin }) {
     summaryEl.innerHTML = `<h4>${originLabel || 'Selection'}</h4><p class="muted">No routes found.</p>`;
     return;
   }
+
   const totalPassengers = d3.sum(links, (d) => d.PASSENGERS);
-  const top = links[0];
-  const topLabel = formatAirportLabel(top.DEST, top.d_city, top.d_state);
+  const totalFlights = d3.sum(links, (d) => d.DEPARTURES);
+
+  // Use mapFilters.top to show exact number of destinations from slider
+  const displayCount = Math.min(mapFilters.top || 15, links.length);
   const list = links
-    .slice(0, 15)
+    .slice(0, displayCount)
     .map(
       (d) => `
         <div class="summary-row">
-          <span class="summary-dest">${formatAirportLabel(d.DEST, d.d_city, d.d_state)}</span>
-          <span class="summary-pass">${formatNumber(d.PASSENGERS)} passengers</span>
+          <span class="summary-dest" title="${formatAirportLabel(d.DEST, d.d_city, d.d_state)}">${formatAirportLabel(d.DEST, d.d_city, d.d_state)}</span>
+          <span class="summary-pass">${formatNumber(d.PASSENGERS)}</span>
           <span class="summary-dot">·</span>
-          <span class="summary-flights">${formatNumber(d.DEPARTURES)} flights</span>
+          <span class="summary-flights">${formatNumber(d.DEPARTURES)}</span>
         </div>`
     )
     .join('');
+
   summaryEl.innerHTML = `
-    <h4>${originLabel} — ${monthLabel(month)} ${yearLabel(year)}</h4>
-    <p><strong>${formatNumber(totalPassengers)}</strong> passengers across ${links.length} routes.</p>
-    <p class="muted">Top destination: ${topLabel} (${formatNumber(top.PASSENGERS)} pax)</p>
-    <div class="summary-list" style="margin-top:8px">${list}</div>
+    <h4>${originLabel}</h4>
+    <p style="font-size: 13px; margin-bottom: var(--space-md);"><strong>${formatNumber(totalPassengers)}</strong> passengers · <strong>${formatNumber(totalFlights)}</strong> flights</p>
+    <div class="summary-list">${list}</div>
   `;
 }
