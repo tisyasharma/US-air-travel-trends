@@ -14,6 +14,8 @@ function SeasonalCapacity() {
       .catch(err => console.error('Fetch error:', err))
   }, [])
 
+  // Convert SVG to PNG and trigger download
+  // Process: serialize SVG → create canvas → draw image → export as PNG data URL
   const handleSavePNG = () => {
     const container = document.getElementById('seasonalChart')
     if (!container) return

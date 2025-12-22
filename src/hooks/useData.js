@@ -1,46 +1,49 @@
 import { useState, useEffect } from 'react'
 
-// Global data cache (shared across components)
+// Global data cache shared across all components
+// Loaded once on mount and accessed by visualizations
 export const dataCache = {
-  flowLinks: [],
-  carriers: [],
-  marketShare: [],
-  monthlyMetrics: [],
-  worldGeo: null,
-  usaFeature: null,
-  statesMesh: null,
-  statesGeo: null,
-  nationGeo: null,
-  zoomBehavior: null,
-  svgForZoom: null
+  flowLinks: [],          // Route-level passenger flows with coordinates
+  carriers: [],           // Carrier data by origin airport
+  marketShare: [],        // Monthly market share percentages
+  monthlyMetrics: [],     // Aggregated monthly totals
+  worldGeo: null,         // TopoJSON world geometry for map
+  usaFeature: null,       // Extracted US feature from world data
+  statesMesh: null,       // State boundaries mesh
+  statesGeo: null,        // GeoJSON of US states
+  nationGeo: null,        // National boundary
+  zoomBehavior: null,     // D3 zoom behavior instance
+  svgForZoom: null        // SVG element reference for zoom
 }
 
-// Global state for map filters
+// Filter settings for route map (top N routes sorted by metric)
 export const mapFilters = {
-  sortBy: 'PASSENGERS',
-  top: 15
+  sortBy: 'PASSENGERS',   // Metric to sort by (PASSENGERS, DEPARTURES, SEATS)
+  top: 15                 // Number of top routes to display
 }
 
-// Global state for enabled carriers in market share
+// Tracks which carriers are currently enabled in the market share chart
 export const enabledCarriers = new Set()
 
-// Origin lookup by year/month
+// Maps time period keys to available origin airports
+// Keys: "YEAR-MONTH" (e.g., "2024-1"), "YEAR-0" (all months), "0-MONTH" (all years), "0-0" (all data)
 export const originsByPeriod = new Map()
-// Origin metadata lookup: code -> {city, state}
+
+// Maps airport codes to metadata (city, state) for display labels
 export const originMeta = new Map()
 
 /**
- * Build origin index from flow links
+ * Build origin airport index grouped by time period
+ * Creates lookup maps for populating origin dropdown based on selected year/month
  */
 export function buildOriginIndex(flowLinks) {
-  // Clear old entries so reloads don't accumulate stale keys
   originsByPeriod.clear()
   originMeta.clear()
 
-  const groupedByMonth = {}
-  const groupedByYear = {}
-  const groupedAllMonths = {}
-  const groupedAll = new Set()
+  const groupedByMonth = {}      // Specific year-month combinations
+  const groupedByYear = {}       // All months for a given year
+  const groupedAllMonths = {}    // All years for a given month
+  const groupedAll = new Set()   // All origins across all time
 
   flowLinks.forEach(d => {
     const monthKey = `${d.YEAR}-${d.MONTH}`
@@ -78,12 +81,14 @@ export function buildOriginIndex(flowLinks) {
 }
 
 /**
- * Populate origin select dropdown
+ * Populate origin dropdown with airports that have data for the selected time period
+ * Falls back through progressively broader time ranges if no exact match exists
  */
 export function populateOriginSelect(year, month) {
   const key = `${year}-${month}`
-  // Support all-months and all-years buckets
   let origins = originsByPeriod.get(key)
+
+  // Fallback cascade: specific month → all months for year → all years for month → all data
   if (!origins && month === 0 && year !== 0) {
     origins = originsByPeriod.get(`${year}-0`)
   }

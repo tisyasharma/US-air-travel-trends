@@ -50,13 +50,6 @@ export function yearLabel(y) {
 }
 
 /**
- * Clamp a value to [min, max]
- */
-export function clamp(val, min, max) {
-  return Math.min(Math.max(val, min), max);
-}
-
-/**
  * Apply carrier aliases for cleaner display
  * @param {string} name - Carrier name
  * @returns {string} Aliased carrier name

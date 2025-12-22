@@ -1,18 +1,32 @@
 # US Air Travel Trends (1999-2024)
 
-Interactive data visualization exploring 25 years of U.S. domestic air travel patterns, market dynamics, and the impact of major economic events.
+An interactive data visualization exploring 25 years of U.S. domestic air travel patterns, market dynamics, and the impact of major economic events including 9/11, the 2008 financial crisis, and COVID-19.
 
-**DS4200 Final Project** - Tisya Sharma | Northeastern University
+**DS4200 Final Project** | Tisya Sharma | Northeastern University
 
-**Live Site**: https://tisyasharma.github.io/US-air-travel-trends/
+[**Live Demo →**](https://tisyasharma.github.io/US-air-travel-trends/)
+
+---
+
+## Overview
+
+This project analyzes over 25 years of flight data from the Bureau of Transportation Statistics to reveal patterns in passenger behavior, airline market evolution, and industry resilience through major disruptions. The interactive visualizations allow users to explore route networks, seasonal trends, carrier market share, and capacity utilization across different time periods.
 
 ## Tech Stack
 
-- **React** 18 - Component-based UI
-- **Vite** - Fast development server & build tool
-- **D3.js** 7 - Custom interactive visualizations
-- **Vega-Lite** - Declarative chart specifications
-- **Vanilla CSS** - Custom dark theme design
+- **React 18** - Component-based UI architecture
+- **Vite** - Modern build tool with fast HMR
+- **D3.js 7** - Custom interactive visualizations (flow map, area chart, heatmap)
+- **Vega-Lite** - Declarative linked scatter plot and histogram
+- **CSS3** - Custom dark theme with responsive design
+
+## Features
+
+- **Interactive Route Map** - Visualize passenger flow from any origin airport with dynamic filtering
+- **Market Share Evolution** - Track airline dominance and consolidation over 25 years
+- **Seasonal Patterns** - Heatmap revealing cyclical travel trends and anomalies
+- **Capacity Analysis** - Explore load factor distributions and seat utilization
+- **Historical Timeline** - Annotated visualization of major industry events
 
 ## Quick Start
 
@@ -20,7 +34,7 @@ Interactive data visualization exploring 25 years of U.S. domestic air travel pa
 # Install dependencies
 npm install
 
-# Start development server (runs on port 8000)
+# Start development server (localhost:8000)
 npm run dev
 
 # Build for production
@@ -29,8 +43,6 @@ npm run build
 # Preview production build
 npm run preview
 ```
-
-Note: If `npm run dev` reports `vite: command not found`, run `npm install` first.
 
 ## Project Structure
 
@@ -69,13 +81,16 @@ Note: If `npm run dev` reports `vite: command not found`, run `npm install` firs
 │   ├── App.jsx             # Root component
 │   └── main.jsx            # Application entry point
 │
-├── data/                    # Pipeline inputs (raw/clean CSVs + airports.csv)
+├── data/                    # Source data for processing (not in version control)
+│   ├── raw_data/           # Raw BTS CSV files (gitignored)
+│   └── clean_data/         # Processed CSVs (gitignored)
+│
 ├── public/
-│   ├── data/               # Runtime JSON served by Vite
+│   ├── data/               # Production JSON files served by Vite (~61MB)
 │   └── annotated_timeline.png
 │
-├── scripts/                 # Data build scripts
-├── notebooks/               # Analysis/Altair specs
+├── scripts/                 # Python data processing pipeline
+├── notebooks/               # Jupyter notebooks for analysis
 ├── styles.css              # Global dark theme styles
 ├── vite.config.js          # Vite configuration
 └── package.json
@@ -83,75 +98,73 @@ Note: If `npm run dev` reports `vite: command not found`, run `npm install` firs
 
 ## Data Sources
 
-- **BTS T-100 Domestic Segment Data** (1999-2024)
-- U.S. Bureau of Transportation Statistics
-- Preprocessed with Python/Pandas into web-ready JSON
+This project uses the **BTS T-100 Domestic Segment Database** from the U.S. Bureau of Transportation Statistics, covering domestic flight operations from 1999-2024. The raw data includes carrier, route, passenger counts, seats, and departures for all U.S. domestic flights.
 
-## Visualizations
+**Data Processing:** Raw CSVs are cleaned and aggregated using Python/Pandas, then exported to web-optimized JSON files served by the React app.
 
-1. **Passenger Flow Map** - Interactive D3 map showing top routes from selected origin
-2. **Market Share Chart** - 100% stacked area chart of airline market share over time
-3. **Seasonal Heatmap** - Month-by-year grid showing passenger volume patterns
-4. **Capacity Analysis** - Vega-Lite linked scatter & histogram exploring load factors
-5. **Travel Volume Timeline** - Annotated line chart of major historical events
+## Architecture
 
-## Development Notes
+### Visualization Implementation
 
-### Migration from Vanilla JS to React
+- **Flow Map** - D3 projection, GeoJSON rendering, interactive origin selection
+- **Market Share** - D3 stacked area chart with toggleable carriers
+- **Seasonal Heatmap** - D3 grid layout with color scale showing passenger volumes
+- **Capacity Analysis** - Vega-Lite linked views (scatter plot + histogram)
+- **Timeline** - Annotated line chart with major historical events
 
-This project was recently migrated from vanilla JavaScript to React + Vite:
+### Technical Decisions
 
-- **Old structure**: Single `main.js` file (~1.2k lines) + `index.html`
-- **New structure**: Modular React components + separated visualization logic
-- **Benefits**: Better code organization, hot module reload, modern build tooling
+- **D3 Integration**: D3 visualizations use direct DOM manipulation within React `useEffect` hooks
+- **State Management**: Global data cache with local component state (lightweight, no Redux needed)
+- **Styling**: CSS custom properties for consistent theming across components
+- **Data Loading**: Asynchronous JSON fetch on mount with error handling
 
-### Key Technical Decisions
+## Data Pipeline
 
-1. **D3 Integration**: D3 visualizations use direct DOM manipulation within `useEffect` hooks
-2. **State Management**: Local component state (no Redux/Context needed for this scale)
-3. **Styling**: Vanilla CSS with CSS custom properties for theming
-4. **Data Loading**: JSON fetched at runtime (could be optimized with bundling)
-
-## Data Pipeline (Optional)
-
-If you need to rebuild the data from source:
-
-1) Install Python dependencies: `pip install -r requirements.txt` (Python 3.9+)
-2) Add source data:
-   - Cleaned flight CSVs → `data/clean_data/flights_*_clean.csv`
-   - `airports.csv` → `data/airports.csv`
-3) Build JSON for the site (writes to `public/data/`):
-   ```bash
-   python scripts/build_web_data.py
-   ```
-4) Outputs: `public/data/flow_links.json`, `public/data/carriers_by_origin.json`, `public/data/monthly_metrics.json`, `public/data/carrier_market_share.json`
-5) Optional: Rebuild the Seasonal Capacity Vega-Lite spec in `notebooks/02_analysis.ipynb` and save it to `public/data/linked_scatter_histogram.json`
-
-## Build & Deploy
+The data pipeline rebuilds production JSON files from raw BTS data:
 
 ```bash
-# Production build (outputs to /dist)
-npm run build
+# 1. Install Python dependencies (Python 3.9+)
+pip install -r requirements.txt
 
-# Preview production build locally
-npm run preview
+# 2. Add source data to data/ directory
+#    - flights_*_clean.csv → data/clean_data/
+#    - airports.csv → data/
 
-# Deploy dist/ folder to your hosting service
-# (Vercel, Netlify, GitHub Pages, etc.)
+# 3. Run the build script (outputs to public/data/)
+python scripts/build_web_data.py
 ```
 
-## Browser Compatibility
+**Outputs:**
+- `flow_links.json` - Route-level passenger flows
+- `carriers_by_origin.json` - Carrier data by airport
+- `monthly_metrics.json` - Aggregated time series
+- `carrier_market_share.json` - Market share percentages
 
-- Modern browsers (Chrome, Firefox, Safari, Edge)
-- Requires ES6+ support
-- Tested on desktop; mobile responsive
+The Vega-Lite specification (`linked_scatter_histogram.json`) is generated separately in the Jupyter notebooks.
+
+## Deployment
+
+```bash
+# Build for production
+npm run build
+
+# Deploy dist/ to hosting service
+# Recommended: Vercel, Netlify, or GitHub Pages
+```
+
+The production build outputs to `/dist` and includes all optimized assets and data files.
+
+## Browser Support
+
+Modern browsers with ES6+ support (Chrome, Firefox, Safari, Edge). Tested on desktop and mobile viewports.
+
+---
 
 ## License
 
-MIT - Academic project for educational purposes
+MIT License - Academic project for educational purposes.
 
 ## Acknowledgments
 
-- D3.js community for visualization patterns
-- BTS for comprehensive air travel data
-- Vite team for excellent dev tooling 
+Data provided by the U.S. Bureau of Transportation Statistics. Built with React, D3.js, Vega-Lite, and Vite. 

@@ -2,7 +2,9 @@
 
 # Local tooling/deps
 node_modules/
-.claude/
+
+# Build output
+dist/
 
 # Keep bulky source data out of Git (JSON outputs are still tracked)
 data/raw_data/

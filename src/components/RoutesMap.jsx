@@ -52,20 +52,6 @@ function RoutesMap() {
     return () => observer.disconnect()
   }, [state])
 
-  useEffect(() => {
-    // Keep the map sized to the card if layout changes after initial render
-    const canvas = document.getElementById('flowMapCanvas')
-    if (!canvas) return
-    const handleResize = debounce(() => {
-      if (state.origin && dataCache.flowLinks.length > 0) {
-        updateFlowMap(state)
-      }
-    }, 150)
-    const observer = new ResizeObserver(handleResize)
-    observer.observe(canvas)
-    return () => observer.disconnect()
-  }, [state])
-
   const handleZoomReset = () => {
     if (dataCache.svgForZoom && dataCache.zoomBehavior) {
       d3.select(dataCache.svgForZoom)
@@ -75,15 +61,21 @@ function RoutesMap() {
     }
   }
 
+  // Update origin dropdown for new time period and keep previous selection if still valid
   const syncOriginToDropdown = (year, month, prevOrigin) => {
     populateOriginSelect(year, month)
     const select = document.getElementById('originSelect')
     if (!select) return prevOrigin
+
     const options = Array.from(select.options).map(opt => opt.value)
+
+    // Keep previous origin if it still exists for this time period
     if (options.includes(prevOrigin)) {
       select.value = prevOrigin
       return prevOrigin
     }
+
+    // Otherwise default to first available option
     if (options.length > 0) {
       select.value = options[0]
       return options[0]

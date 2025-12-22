@@ -115,17 +115,6 @@ export function renderMarketShare({ preserveEnabled = false } = {}) {
     const hiddenSeries = stacked.find((s) => s.key === '__hidden');
     const visibleStack = stacked.filter((s) => s.key !== '__hidden');
 
-    console.log('market-share debug', {
-      rows: dataCache.marketShare.length,
-      carriers: order.length,
-      series: seriesInput.length,
-      width,
-      height,
-      xDomain: xDomainNums,
-      first: seriesInput[0],
-      last: seriesInput[seriesInput.length - 1],
-    });
-
     const svg = container.append('svg').attr('width', width).attr('height', height);
     const area = d3
       .area()
