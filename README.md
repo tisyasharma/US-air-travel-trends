@@ -87,7 +87,6 @@ npm run preview
 │
 ├── public/
 │   ├── data/               # Production JSON files served by Vite (~61MB)
-│   └── annotated_timeline.png
 │
 ├── scripts/                 # Python data processing pipeline
 ├── notebooks/               # Jupyter notebooks for analysis
