@@ -4,7 +4,7 @@
  */
 
 import * as d3 from 'd3';
-import { formatNumber } from '../utils/helpers.js';
+import { assetUrl, formatNumber } from '../utils/helpers.js';
 import { MONTH_NAMES } from '../utils/constants.js';
 
 let heatmapTooltip = null;
@@ -43,7 +43,7 @@ export async function renderSeasonalHeatmap() {
   const height = heatEl.node().clientHeight;
 
   // Load the monthly totals (precomputed JSON; see build script)
-  const monthly = await fetch("data/monthly_metrics.json").then(r => r.json());
+  const monthly = await fetch(assetUrl('data/monthly_metrics.json')).then(r => r.json());
 
   // Extract months 1–12 and all years
   const years = [...new Set(monthly.map(d => d.YEAR))].sort((a,b) => a-b);

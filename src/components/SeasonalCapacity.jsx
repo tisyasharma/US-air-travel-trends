@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
+import { assetUrl } from '../utils/helpers.js'
 
 function SeasonalCapacity() {
   useEffect(() => {
     // Load Vega/Altair visualization
-    fetch('/data/linked_scatter_histogram.json')
+    fetch(assetUrl('data/linked_scatter_histogram.json'))
       .then(r => r.json())
       .then(spec => {
         if (window.vegaEmbed) {

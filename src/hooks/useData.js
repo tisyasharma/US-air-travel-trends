@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { assetUrl } from '../utils/helpers.js'
 
 // Global data cache shared across all components
 // Loaded once on mount and accessed by visualizations
@@ -128,10 +129,10 @@ export function useData() {
         setLoading(true)
 
         const [flowLinksRaw, carriersRaw, marketShareRaw, monthlyRaw] = await Promise.all([
-          fetch('/data/flow_links.json').then(r => r.json()),
-          fetch('/data/carriers_by_origin.json').then(r => r.json()),
-          fetch('/data/carrier_market_share.json').then(r => r.json()),
-          fetch('/data/monthly_metrics.json').then(r => r.json())
+          fetch(assetUrl('data/flow_links.json')).then(r => r.json()),
+          fetch(assetUrl('data/carriers_by_origin.json')).then(r => r.json()),
+          fetch(assetUrl('data/carrier_market_share.json')).then(r => r.json()),
+          fetch(assetUrl('data/monthly_metrics.json')).then(r => r.json())
         ])
 
         // Coerce numeric fields

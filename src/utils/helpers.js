@@ -20,6 +20,18 @@ export function formatNumber(n) {
 }
 
 /**
+ * Build a URL that respects Vite's configured base path.
+ * @param {string} path - Path relative to the public root (e.g., "data/file.json")
+ * @returns {string} Resolved asset URL
+ */
+export function assetUrl(path) {
+  const base = import.meta.env.BASE_URL || '/';
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`;
+  const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
+/**
  * Format a value as a percentage
  * @param {number} v - Value to format (0-1 range)
  * @returns {string} Formatted percentage or '—' if invalid
